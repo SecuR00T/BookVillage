@@ -1,0 +1,144 @@
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 40 25% 97%;
+    --foreground: 220 25% 12%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 220 25% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 25% 12%;
+
+    --primary: 220 72% 28%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 20% 94%;
+    --secondary-foreground: 220 25% 12%;
+
+    --muted: 220 15% 92%;
+    --muted-foreground: 220 10% 46%;
+
+    --accent: 2 78% 52%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 15% 90%;
+    --input: 220 15% 90%;
+    --ring: 220 72% 28%;
+
+    --radius: 0.625rem;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Custom tokens */
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+    --price: 2 78% 52%;
+    --price-discount: 220 72% 28%;
+    --star: 45 93% 47%;
+    --badge-new: 145 63% 42%;
+    --badge-hot: 2 78% 52%;
+    --badge-sale: 38 92% 50%;
+    --header-bg: 220 72% 28%;
+    --header-foreground: 0 0% 100%;
+    --hero-gradient-from: 220 72% 28%;
+    --hero-gradient-to: 220 60% 40%;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 220 15% 90%;
+    --card: 220 25% 12%;
+    --card-foreground: 220 15% 90%;
+    --popover: 220 25% 12%;
+    --popover-foreground: 220 15% 90%;
+    --primary: 220 60% 55%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 220 20% 18%;
+    --secondary-foreground: 220 15% 90%;
+    --muted: 220 15% 18%;
+    --muted-foreground: 220 10% 55%;
+    --accent: 2 78% 52%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 15% 20%;
+    --input: 220 15% 20%;
+    --ring: 220 60% 55%;
+    --header-bg: 220 30% 12%;
+    --header-foreground: 0 0% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+}
+
+@layer utilities {
+  .book-card-enter {
+    animation: book-card-enter 0.55s ease-out both;
+  }
+
+  .text-price {
+    color: hsl(var(--price));
+  }
+  .text-star {
+    color: hsl(var(--star));
+  }
+  .bg-header {
+    background-color: hsl(var(--header-bg));
+  }
+  .text-header {
+    color: hsl(var(--header-foreground));
+  }
+  .gradient-hero {
+    background: linear-gradient(135deg, hsl(var(--hero-gradient-from)), hsl(var(--hero-gradient-to)));
+  }
+  .badge-new {
+    background-color: hsl(var(--badge-new));
+    color: hsl(var(--success-foreground));
+  }
+  .badge-hot {
+    background-color: hsl(var(--badge-hot));
+    color: hsl(var(--accent-foreground));
+  }
+  .badge-sale {
+    background-color: hsl(var(--badge-sale));
+    color: hsl(var(--warning-foreground));
+  }
+}
+
+@keyframes book-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

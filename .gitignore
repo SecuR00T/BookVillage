@@ -1,0 +1,45 @@
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.iml
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Node
+**/node_modules/
+**/dist/
+**/.vite/
+**/coverage/
+**/.eslintcache
+
+# Java / Spring / Maven
+**/target/
+**/*.class
+
+# Android / Gradle
+**/.gradle/
+**/build/
+local.properties
+
+# Project-specific generated artifacts
+ohyes24/.git_inner_backup/
+ohyes24/BOOT-INF/
+ohyes24/backend/app-from-container.jar
+ohyes24/temp_bundle.js
+ohyes24/temp_bundle_new.js
+ohyes24/temp_index.html
+ohyes24/frontend/live-index*.js
+ohyes24/frontend/live-index.html
+ohyes24/frontend/dist-*.js

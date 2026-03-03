@@ -1,0 +1,91 @@
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-yes24_mock}
+    ports:
+      - "${MYSQL_PORT:-3407}:3306"
+    volumes:
+      - shared-mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-1234}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+    networks:
+      - shared-net
+
+  yes24-backend:
+    build:
+      context: ./ohyes24/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-yes24_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
+    ports:
+      - "${SHOP_BACKEND_PORT:-8080}:8080"
+    volumes:
+      - shared-backend-uploads:/app/uploads
+    networks:
+      - shared-net
+
+  yes24-frontend:
+    build:
+      context: ./ohyes24/frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - yes24-backend
+    ports:
+      - "${SHOP_FRONTEND_PORT:-8081}:80"
+    networks:
+      - shared-net
+
+
+  admin-backend:
+    build:
+      context: ../2.25_admin/admin/backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-yes24_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
+    ports:
+      - "${ADMIN_BACKEND_PORT:-18081}:18081"
+    networks:
+      - shared-net
+
+  admin-frontend:
+    build:
+      context: ../2.25_admin/admin
+      dockerfile: Dockerfile.frontend
+    restart: unless-stopped
+    depends_on:
+      - admin-backend
+    environment:
+      BACKEND_PROXY_HOST: admin-backend
+      BACKEND_PROXY_PORT: 18081
+      NGINX_ENVSUBST_FILTER: BACKEND_PROXY_HOST|BACKEND_PROXY_PORT
+    ports:
+      - "${ADMIN_FRONTEND_PORT:-18080}:80"
+    networks:
+      - shared-net
+
+volumes:
+  shared-mysql-data:
+  shared-backend-uploads:
+
+networks:
+  shared-net:
+    name: shared-net

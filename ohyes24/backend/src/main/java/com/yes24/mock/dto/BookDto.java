@@ -17,6 +17,8 @@ public class BookDto {
     private Integer stock;
     private String description;
     private String coverImageUrl;
+    private Double rating;
+    private Long reviewCount;
 
     public static BookDto from(Book book) {
         BookDto dto = new BookDto();
@@ -30,6 +32,8 @@ public class BookDto {
         dto.setStock(book.getStock());
         dto.setDescription(book.getDescription());
         dto.setCoverImageUrl(book.getCoverImageUrl());
+        dto.setRating(null);
+        dto.setReviewCount(0L);
         return dto;
     }
 }

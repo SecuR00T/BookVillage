@@ -13,7 +13,15 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const creds = btoa(unescape(encodeURIComponent(`${email}:${password}`)));
     sessionStorage.setItem("ohyes24_creds", creds);
-    const me = await api.auth.login({ email, password });
+    let me;
+    try {
+      me = await api.auth.login({ email, password });
+    } catch (err) {
+      if (err instanceof Error && err.message === "Unauthorized") {
+        throw new Error("이메일 또는 비밀번호를 다시 확인해 주세요.");
+      }
+      throw err;
+    }
     sessionStorage.setItem("ohyes24_user", JSON.stringify(me));
     setUser(me);
     notifyAuthChanged();

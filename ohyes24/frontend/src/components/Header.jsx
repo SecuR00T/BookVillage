@@ -1,4 +1,4 @@
-﻿import { Search, ShoppingCart, User, Heart, Menu, X, Sparkles } from "lucide-react";
+﻿import { Search, ShoppingCart, Heart, Menu, X, Sparkles } from "lucide-react";
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
@@ -22,6 +22,19 @@ const Header = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const boardPath = user ? "/board" : "/login";
+  const navItems = useMemo(
+    () => [
+      { label: "공지사항", to: "/customer-service?tab=notice" },
+      { label: "회원게시판", to: boardPath },
+      ...categories.map((cat) => ({
+        label: cat,
+        to: `/books?category=${encodeURIComponent(cat)}`,
+      })),
+    ],
+    [boardPath],
+  );
 
   const topLinks = useMemo(() => {
     if (user) {
@@ -55,8 +68,8 @@ const Header = () => {
 
   const handleSearch = (e) => {
     e.preventDefault();
-    const q = searchQuery.trim();
-    navigate(q ? `/books?q=${encodeURIComponent(q)}` : "/books");
+    const rawQuery = searchQuery;
+    navigate(rawQuery.trim() ? `/books?q=${encodeURIComponent(rawQuery)}` : "/books");
   };
 
   return (
@@ -65,9 +78,13 @@ const Header = () => {
         <div className="container mx-auto px-4 py-1.5 flex justify-between items-center text-xs">
           <div className="flex items-center gap-2">
             <Sparkles size={12} />
-            <Link to="/register" className="font-medium hover:underline">
-              회원가입 시 첫 구매 15% 할인 쿠폰 즉시 지급
-            </Link>
+            {user ? (
+              <span className="font-medium">회원 전용 혜택과 주문 기능을 이용할 수 있습니다.</span>
+            ) : (
+              <Link to="/register" className="font-medium hover:underline">
+                회원가입 시 첫 구매 15% 할인 쿠폰 즉시 지급
+              </Link>
+            )}
           </div>
           <div className="hidden sm:flex gap-3 items-center">{topLinks}</div>
         </div>
@@ -116,13 +133,6 @@ const Header = () => {
                 </span>
               )}
             </Link>
-            <Link
-              to={user ? "/mypage" : "/login"}
-              className="hidden sm:flex p-2 rounded-xl hover:bg-secondary transition-all duration-300 hover:-translate-y-0.5"
-              title="마이페이지"
-            >
-              <User size={20} className="text-muted-foreground" />
-            </Link>
             <button
               className="sm:hidden p-2 rounded-xl hover:bg-secondary transition-all duration-300"
               onClick={() => setMobileMenuOpen((v) => !v)}
@@ -154,13 +164,13 @@ const Header = () => {
       <div className="border-t border-border/80">
         <div className="container mx-auto px-4">
           <nav className="hidden sm:flex gap-6 py-2.5 text-sm font-medium text-muted-foreground">
-            {categories.map((cat) => (
+            {navItems.map((item) => (
               <button
-                key={cat}
+                key={item.label}
                 className="relative whitespace-nowrap transition-all duration-300 hover:text-primary after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
-                onClick={() => navigate(`/books?category=${encodeURIComponent(cat)}`)}
+                onClick={() => navigate(item.to)}
               >
-                {cat}
+                {item.label}
               </button>
             ))}
           </nav>
@@ -177,19 +187,19 @@ const Header = () => {
             className="sm:hidden overflow-hidden border-t border-border bg-card/95 backdrop-blur-md"
           >
             <div className="p-4 space-y-2.5">
-              {categories.map((cat, idx) => (
+              {navItems.map((item, idx) => (
                 <motion.button
-                  key={cat}
+                  key={item.label}
                   initial={{ opacity: 0, x: -8 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: idx * 0.03 }}
                   className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground transition-colors"
                   onClick={() => {
-                    navigate(`/books?category=${encodeURIComponent(cat)}`);
+                    navigate(item.to);
                     setMobileMenuOpen(false);
                   }}
                 >
-                  {cat}
+                  {item.label}
                 </motion.button>
               ))}
               <hr className="border-border" />
@@ -210,12 +220,6 @@ const Header = () => {
                 className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground"
               >
                 내 주문
-              </Link>
-              <Link
-                to={user ? "/board" : "/login"}
-                className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground"
-              >
-                회원게시판
               </Link>
             </div>
           </motion.div>

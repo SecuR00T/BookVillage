@@ -3,24 +3,25 @@ import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, ShieldCheck, Truck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
-import { api } from "@/api/client";
 
 const TEXT = {
   brand: "OHYES24",
-  title: "\uB85C\uADF8\uC778",
-  subtitle: "OHYES24 \uACC4\uC815\uC73C\uB85C \uB85C\uADF8\uC778\uD558\uC138\uC694.",
-  heroLine1: "\uBC18\uAC00\uC6CC\uC694. \uB85C\uADF8\uC778\uD558\uACE0",
-  heroLine2: "\uCC45 \uC1FC\uD551\uC744 \uC774\uC5B4\uAC00\uC138\uC694.",
-  heroDesc: "\uD68C\uC6D0 \uC804\uC6A9 \uC7A5\uBC14\uAD6C\uB2C8, \uC8FC\uBB38\uB0B4\uC5ED, \uB9C8\uC774\uD398\uC774\uC9C0 \uAE30\uB2A5\uC744 \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
-  benefit1: "\uC2E4\uC2DC\uAC04 \uC778\uAE30 \uB3C4\uC11C\uC640 \uC2E0\uAC04 \uD050\uB808\uC774\uC158",
-  benefit2: "\uC8FC\uBB38/\uBC30\uC1A1 \uC0C1\uD0DC\uB97C \uD55C\uB208\uC5D0 \uD655\uC778",
-  benefit3: "\uBCF4\uC548 \uD559\uC2B5 \uAE30\uB2A5\uAE4C\uC9C0 \uB3D9\uC77C \uACC4\uC815\uC73C\uB85C \uC811\uADFC",
-  email: "\uC774\uBA54\uC77C",
-  password: "\uBE44\uBC00\uBC88\uD638",
-  submit: "\uB85C\uADF8\uC778",
-  noAccount: "\uACC4\uC815\uC774 \uC5C6\uB098\uC694?",
-  register: "\uD68C\uC6D0\uAC00\uC785",
-  loginFail: "\uB85C\uADF8\uC778 \uC2E4\uD328",
+  title: "로그인",
+  subtitle: "OHYES24 계정으로 로그인하세요.",
+  heroLine1: "반가워요. 로그인하고",
+  heroLine2: "책 쇼핑을 이어가세요.",
+  heroDesc: "회원 전용 장바구니, 주문내역, 마이페이지 기능을 이용할 수 있습니다.",
+  benefit1: "실시간 인기 도서와 신간 큐레이션",
+  benefit2: "주문/배송 상태를 한눈에 확인",
+  benefit3: "보안 학습 기능까지 동일 계정으로 접근",
+  email: "이메일",
+  password: "비밀번호",
+  submit: "로그인",
+  findId: "아이디 찾기",
+  resetPassword: "비밀번호 재설정",
+  noAccount: "계정이 없나요?",
+  register: "회원가입",
+  loginFail: "로그인 실패",
 };
 
 export default function Login() {
@@ -29,16 +30,6 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [findIdName, setFindIdName] = useState("");
-  const [findIdEmail, setFindIdEmail] = useState("");
-  const [findIdResult, setFindIdResult] = useState("");
-  const [findIdError, setFindIdError] = useState("");
-  const [resetEmail, setResetEmail] = useState("");
-  const [resetUserId, setResetUserId] = useState("");
-  const [resetToken, setResetToken] = useState("");
-  const [resetNewPassword, setResetNewPassword] = useState("");
-  const [resetResult, setResetResult] = useState("");
-  const [resetError, setResetError] = useState("");
 
   const submit = async (e) => {
     e.preventDefault();
@@ -48,43 +39,6 @@ export default function Login() {
       navigate("/");
     } catch (err) {
       setError(err instanceof Error ? err.message : TEXT.loginFail);
-    }
-  };
-
-  const submitFindId = async (e) => {
-    e.preventDefault();
-    setFindIdError("");
-    setFindIdResult("");
-    try {
-      const response = await api.auth.findId(findIdName, findIdEmail);
-      const foundId = response?.foundId || response?.maskedId || "N/A";
-      setFindIdResult(`Found ID: ${foundId}`);
-    } catch (err) {
-      setFindIdError(err instanceof Error ? err.message : "Find ID failed");
-    }
-  };
-
-  const submitResetRequest = async (e) => {
-    e.preventDefault();
-    setResetError("");
-    setResetResult("");
-    try {
-      const response = await api.auth.requestPasswordReset(resetEmail);
-      setResetResult(response?.message || "Password reset request sent.");
-    } catch (err) {
-      setResetError(err instanceof Error ? err.message : "Password reset request failed");
-    }
-  };
-
-  const submitResetConfirm = async (e) => {
-    e.preventDefault();
-    setResetError("");
-    setResetResult("");
-    try {
-      await api.auth.confirmPasswordReset(resetEmail, resetToken, resetNewPassword, resetUserId);
-      setResetResult("Password reset completed.");
-    } catch (err) {
-      setResetError(err instanceof Error ? err.message : "Password reset confirm failed");
     }
   };
 
@@ -145,6 +99,21 @@ export default function Login() {
             <button className="w-full rounded-xl bg-primary py-3 text-base font-bold text-primary-foreground transition-opacity hover:opacity-90">
               {TEXT.submit}
             </button>
+
+            <div className="grid grid-cols-2 gap-2.5">
+              <Link
+                to="/account-recovery?mode=id"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                {TEXT.findId}
+              </Link>
+              <Link
+                to="/account-recovery?mode=reset"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
+              >
+                {TEXT.resetPassword}
+              </Link>
+            </div>
           </form>
 
           <p className="mt-4 text-sm text-muted-foreground">
@@ -153,69 +122,6 @@ export default function Login() {
               {TEXT.register}
             </Link>
           </p>
-
-          <div className="mt-6 space-y-4 border-t border-border pt-5">
-            <div className="rounded-xl border border-border/70 bg-secondary/20 p-4">
-              <p className="text-sm font-semibold">ID Lookup Lab</p>
-              <form onSubmit={submitFindId} className="mt-3 space-y-2">
-                <input
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="Name"
-                  value={findIdName}
-                  onChange={(e) => setFindIdName(e.target.value)}
-                />
-                <input
-                  type="email"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="Email"
-                  value={findIdEmail}
-                  onChange={(e) => setFindIdEmail(e.target.value)}
-                />
-                <button className="w-full rounded-lg bg-primary/90 py-2 text-sm font-semibold text-primary-foreground">Find ID</button>
-              </form>
-              {findIdResult && <p className="mt-2 text-xs text-emerald-700">{findIdResult}</p>}
-              {findIdError && <p className="mt-2 text-xs text-red-600">{findIdError}</p>}
-            </div>
-
-            <div className="rounded-xl border border-border/70 bg-secondary/20 p-4">
-              <p className="text-sm font-semibold">Password Reset Lab</p>
-              <form onSubmit={submitResetRequest} className="mt-3 space-y-2">
-                <input
-                  type="email"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="Victim Email"
-                  value={resetEmail}
-                  onChange={(e) => setResetEmail(e.target.value)}
-                />
-                <button className="w-full rounded-lg border border-input bg-background py-2 text-sm font-semibold">Request Reset Token</button>
-              </form>
-
-              <form onSubmit={submitResetConfirm} className="mt-3 space-y-2">
-                <input
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="userId (exposed in request)"
-                  value={resetUserId}
-                  onChange={(e) => setResetUserId(e.target.value)}
-                />
-                <input
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="Token (0000-9999)"
-                  value={resetToken}
-                  onChange={(e) => setResetToken(e.target.value)}
-                />
-                <input
-                  type="password"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
-                  placeholder="New Password (min 8)"
-                  value={resetNewPassword}
-                  onChange={(e) => setResetNewPassword(e.target.value)}
-                />
-                <button className="w-full rounded-lg bg-primary/90 py-2 text-sm font-semibold text-primary-foreground">Confirm Reset</button>
-              </form>
-              {resetResult && <p className="mt-2 text-xs text-emerald-700">{resetResult}</p>}
-              {resetError && <p className="mt-2 text-xs text-red-600">{resetError}</p>}
-            </div>
-          </div>
         </div>
       </section>
     </PageLayout>

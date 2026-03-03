@@ -52,6 +52,12 @@ const toFiniteNumber = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
+const toOptionalFiniteNumber = (value) => {
+  if (value === null || value === undefined || value === "") return undefined;
+  const n = Number(value);
+  return Number.isFinite(n) ? n : undefined;
+};
+
 export const normalizeBook = (raw) => {
   if (!raw) return null;
 
@@ -66,10 +72,10 @@ export const normalizeBook = (raw) => {
   const description = isMetadataDescription(descriptionRaw) ? "" : descriptionRaw;
   const productId = firstNonEmpty(descriptionMeta.productid);
 
-  const rating = Number.isFinite(Number(raw.rating)) ? Number(raw.rating) : extracted.rating;
-  const reviewCount = Number.isFinite(Number(raw.reviewCount)) ? Number(raw.reviewCount) : extracted.reviewCount;
-  const sourceRating = Number.isFinite(Number(descriptionMeta.rating)) ? Number(descriptionMeta.rating) : undefined;
-  const sourceReviewCount = Number.isFinite(Number(descriptionMeta.reviewcount)) ? Number(descriptionMeta.reviewcount) : undefined;
+  const rating = toOptionalFiniteNumber(raw.rating) ?? extracted.rating;
+  const reviewCount = toOptionalFiniteNumber(raw.reviewCount) ?? extracted.reviewCount;
+  const sourceRating = toOptionalFiniteNumber(descriptionMeta.rating);
+  const sourceReviewCount = toOptionalFiniteNumber(descriptionMeta.reviewcount);
   const localCoverImageUrl = productId ? kyoboImageMap[productId] || "" : "";
 
   return {

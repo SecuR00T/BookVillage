@@ -10,6 +10,7 @@ import com.yes24.mock.repository.BookRepository;
 import com.yes24.mock.repository.OrderRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -187,6 +188,15 @@ public class OrderService {
         return orderRepository.findByUserId(userId).stream()
                 .map(OrderDto::from)
                 .collect(Collectors.toList());
+    }
+
+    public OrderDto getOrderDetailByUserId(Long userId, Long orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        if (!order.getUserId().equals(userId)) {
+            throw new AccessDeniedException("다른 회원의 주문은 조회할 수 없습니다.");
+        }
+        return OrderDto.from(order);
     }
 
     public OrderDto getOrderByOrderNumber(String orderNumber) {

@@ -10,6 +10,12 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.DayOfWeek;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -62,13 +68,54 @@ public class BookController {
             @RequestParam(required = false) String zipcode,
             @AuthenticationPrincipal UserPrincipal principal) {
         String input = zipcode == null ? "" : zipcode;
+        LocalDateTime nowKst = LocalDateTime.now(ZoneId.of("Asia/Seoul"));
+        LocalTime cutoff = LocalTime.of(15, 0);
+
+        int processDelayDays = nowKst.toLocalTime().isAfter(cutoff) ? 1 : 0;
+        int regionalDelayDays = regionDelayDays(zipcode);
+        int etaDays = 1 + processDelayDays + regionalDelayDays;
+
+        LocalDate arrivalDate = addBusinessDays(nowKst.toLocalDate(), etaDays);
+        LocalDateTime arrivalDateTime = arrivalDate.atTime(18, 0);
+
         Map<String, Object> body = new LinkedHashMap<>();
         body.put("bookId", bookId);
         body.put("zipcode", zipcode);
-        body.put("etaDays", 1 + (bookId.intValue() % 3));
+        body.put("etaDays", etaDays);
         body.put("carrier", "OHYES24 Logistics");
+        body.put("orderCutoffTime", cutoff.format(DateTimeFormatter.ofPattern("HH:mm")));
+        body.put("estimatedArrivalDate", arrivalDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
+        body.put("estimatedArrivalDateTime", arrivalDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
+        body.put("calculatedAt", nowKst.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
         body.put("simulation", securityLabService.simulate("REQ-COM-013", principal != null ? principal.getUserId() : null, "/api/books/" + bookId + "/shipping-info", input));
         return ResponseEntity.ok(body);
+    }
+
+    private int regionDelayDays(String zipcode) {
+        if (zipcode == null || zipcode.trim().isEmpty()) {
+            return 1;
+        }
+        String z = zipcode.trim();
+        if (z.startsWith("0") || z.startsWith("1")) {
+            return 0;
+        }
+        if (z.startsWith("2") || z.startsWith("3")) {
+            return 1;
+        }
+        return 2;
+    }
+
+    private LocalDate addBusinessDays(LocalDate start, int days) {
+        LocalDate date = start;
+        int added = 0;
+        while (added < days) {
+            date = date.plusDays(1);
+            DayOfWeek day = date.getDayOfWeek();
+            if (day != DayOfWeek.SATURDAY && day != DayOfWeek.SUNDAY) {
+                added++;
+            }
+        }
+        return date;
     }
 
     @GetMapping("/{bookId}/preview")

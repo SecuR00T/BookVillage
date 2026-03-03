@@ -130,13 +130,15 @@ export default function BookSearch() {
     setHint("");
 
     try {
-      const queryText = (query || "").trim();
+      const queryText = query || "";
+      const queryTextTrimmed = queryText.trim();
+      const hasQuery = queryTextTrimmed.length > 0;
       const normalizedCategory = (selectedCategory || "").trim();
       const isBestsellerCategory = normalizedCategory === BESTSELLER_CATEGORY;
       const isVirtualCategory = VIRTUAL_CATEGORIES.includes(normalizedCategory);
 
       const list = await api.books.search(
-        isVirtualCategory || isBestsellerCategory ? undefined : queryText || undefined,
+        isVirtualCategory || isBestsellerCategory ? undefined : hasQuery ? queryText : undefined,
         isVirtualCategory || isBestsellerCategory ? undefined : normalizedCategory || undefined,
       );
       let mapped = (list || []).map((book) => normalizeBook(book)).filter(Boolean);
@@ -145,7 +147,7 @@ export default function BookSearch() {
         mapped = pickCuratedBestsellers(mapped);
       } else if (isVirtualCategory) {
         const { list: categorized, fallbackUsed } = applyVirtualCategory(mapped, normalizedCategory);
-        mapped = queryText ? categorized.filter((book) => matchesQuery(book, queryText)) : categorized;
+        mapped = hasQuery ? categorized.filter((book) => matchesQuery(book, queryTextTrimmed)) : categorized;
 
         if (fallbackUsed) {
           setHint("\uD574\uB2F9 \uBD84\uB958 \uD0A4\uC6CC\uB4DC\uC640 \uC815\uD655\uD788 \uC77C\uCE58\uD558\uB294 \uB3C4\uC11C\uAC00 \uC801\uC5B4 \uC720\uC0AC \uB3C4\uC11C\uB97C \uD45C\uC2DC\uD569\uB2C8\uB2E4.");
@@ -183,7 +185,8 @@ export default function BookSearch() {
 
   const submit = (e) => {
     e.preventDefault();
-    setParams({ ...(q ? { q } : {}), ...(category ? { category } : {}) });
+    const safeQ = q.trim() ? q : "";
+    setParams({ ...(safeQ ? { q: safeQ } : {}), ...(category ? { category } : {}) });
   };
 
   const handleWishlistAdd = async (event, bookId) => {

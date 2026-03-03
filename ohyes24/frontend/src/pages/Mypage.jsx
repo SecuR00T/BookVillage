@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import {
   AlertTriangle,
   Clock3,
@@ -64,15 +64,29 @@ const TEXT = {
   wishlist: "\uCC1C \uBAA9\uB85D",
   wallet: "\uC9C0\uAC11",
   favoritePosts: "\uAD00\uC2EC \uAC8C\uC2DC\uAE00",
+  myReviews: "\uB098\uC758 \uB9AC\uBDF0 \uAD00\uB9AC",
   emptyRecent: "\uCD5C\uADFC \uC870\uD68C\uD55C \uB3C4\uC11C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
   emptyWishlist: "\uCC1C\uD55C \uB3C4\uC11C\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
   emptyFavorite: "\uAD00\uC2EC \uAC8C\uC2DC\uAE00\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  emptyMyReviews: "\uC791\uC131\uD55C \uB9AC\uBDF0\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.",
   remove: "\uC0AD\uC81C",
+  ratingLabel: "\uD3C9\uC810",
+  reviewContentLabel: "\uB9AC\uBDF0 \uB0B4\uC6A9",
+  reviewEditSave: "\uB9AC\uBDF0 \uC218\uC815",
+  reviewDelete: "\uB9AC\uBDF0 \uC0AD\uC81C",
+  reviewSaved: "\uB9AC\uBDF0\uAC00 \uC218\uC815\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  reviewDeleted: "\uB9AC\uBDF0\uAC00 \uC0AD\uC81C\uB418\uC5C8\uC2B5\uB2C8\uB2E4.",
+  reviewContentRequired: "\uB9AC\uBDF0 \uB0B4\uC6A9\uC744 \uC785\uB825\uD574 \uC8FC\uC138\uC694.",
+  reviewDeleteAsk: "\uC120\uD0DD\uD55C \uB9AC\uBDF0\uB97C \uC0AD\uC81C\uD560\uAE4C\uC694?",
+  reviewRatingRange: "\uD3C9\uC810\uC740 1~5 \uC0AC\uC774\uC5EC\uC57C \uD569\uB2C8\uB2E4.",
+  reviewUpdateFail: "\uB9AC\uBDF0 \uC218\uC815\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+  reviewDeleteFail: "\uB9AC\uBDF0 \uC0AD\uC81C\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
   currentPoints: "\uD604\uC7AC \uD3EC\uC778\uD2B8",
   pointHistoryCount: "\uD3EC\uC778\uD2B8 \uAE30\uB85D",
   couponCount: "\uBCF4\uC720 \uCFE0\uD3F0",
   availableCoupons: "\uC0AC\uC6A9 \uAC00\uB2A5 \uCFE0\uD3F0",
   noCoupons: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uCFE0\uD3F0\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  remainingCount: "\uB0A8\uC740 \uC218\uB7C9",
   goBooks: "\uB3C4\uC11C \uBCF4\uB7EC\uAC00\uAE30",
   recentCount: "\uCD5C\uADFC \uC870\uD68C",
   wishlistCount: "\uCC1C \uC218",
@@ -80,6 +94,19 @@ const TEXT = {
   refresh: "\uC0C8\uB85C\uACE0\uCE68",
   viewMyInfo: "\uB0B4 \uC815\uBCF4 \uBCF4\uAE30",
   viewMyInfoDone: "\uB0B4 \uC815\uBCF4(user_id={id}) \uC870\uD68C \uC644\uB8CC",
+  viewMemberInfoDone: "\uD68C\uC6D0\uC815\uBCF4(user_id={id}) \uC870\uD68C \uC644\uB8CC",
+  viewTargetInfo: "\uD68C\uC6D0\uBC88\uD638\uB85C \uC870\uD68C",
+  viewingUserId: "\uD604\uC7AC \uC870\uD68C user_id",
+  idorHint:
+    "IDOR \uC2E4\uC2B5: URL \uC9C8\uC758\uBB38\uC790\uC5F4\uC758 user_id \uAC12\uC744 \uBCC0\uACBD\uD558\uBA74 \uB2E4\uB978 \uD68C\uC6D0\uC758 \uAC1C\uC778\uC815\uBCF4\uAC00 \uB178\uCD9C\uB420 \uC218 \uC788\uC2B5\uB2C8\uB2E4.",
+  userIdLabel: "\uD68C\uC6D0\uBC88\uD638(user_id)",
+  userIdPlaceholder: "\uC608: 2, 3, 4 ...",
+  invalidUserId: "\uC62C\uBC14\uB978 \uD68C\uC6D0\uBC88\uD638\uB97C \uC785\uB825\uD558\uC138\uC694.",
+  profileLoadFail: "\uD68C\uC6D0 \uC815\uBCF4 \uC870\uD68C\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.",
+  otherProfileReadonly: "\uD0C0\uC778 user_id \uC870\uD68C \uC911\uC5D0\uB294 \uD504\uB85C\uD544 \uC218\uC815\uC774 \uBE44\uD65C\uC131\uD654\uB429\uB2C8\uB2E4.",
+  ordersShortcut: "\uB0B4 \uC8FC\uBB38 \uBCF4\uAE30",
+  couponsShortcut: "\uCFE0\uD3F0 \uD655\uC778",
+  walletLoadFail: "\uCFE0\uD3F0/\uD3EC\uC778\uD2B8 \uB370\uC774\uD130\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68\uC744 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
   partialLoad: "\uC77C\uBD80 \uC704\uC82F \uB370\uC774\uD130\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC0C8\uB85C\uACE0\uCE68\uC73C\uB85C \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.",
 };
 
@@ -91,6 +118,11 @@ const formatDate = (value) => {
 };
 
 const formatMoney = (value) => Number(value || 0).toLocaleString("ko-KR");
+const extractBookId = (row) => {
+  const raw = row?.bookId ?? row?.book_id ?? row?.bookid;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+};
 
 const SummaryCard = ({ icon: Icon, label, value, onClick }) => (
   <button
@@ -109,12 +141,15 @@ const SummaryCard = ({ icon: Icon, label, value, onClick }) => (
 export default function Mypage() {
   const { user, deleteAccount } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const [profile, setProfile] = useState(null);
+  const [profileLoading, setProfileLoading] = useState(true);
   const [edit, setEdit] = useState({ name: "", phone: "", address: "" });
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileMsg, setProfileMsg] = useState("");
   const [profileErr, setProfileErr] = useState("");
+  const [targetUserIdInput, setTargetUserIdInput] = useState("");
 
   const [pwForm, setPwForm] = useState({ currentPassword: "", newPassword: "", confirmPassword: "" });
   const [pwError, setPwError] = useState("");
@@ -130,26 +165,47 @@ export default function Mypage() {
   const [wishlist, setWishlist] = useState([]);
   const [wallet, setWallet] = useState(null);
   const [favoritePosts, setFavoritePosts] = useState([]);
+  const [myReviews, setMyReviews] = useState([]);
+  const [reviewDrafts, setReviewDrafts] = useState({});
+  const [reviewActionError, setReviewActionError] = useState("");
+  const [reviewActionMessage, setReviewActionMessage] = useState("");
+  const [savingReviewId, setSavingReviewId] = useState(null);
+  const [deletingReviewId, setDeletingReviewId] = useState(null);
   const [summaryFromServer, setSummaryFromServer] = useState(null);
   const [extrasError, setExtrasError] = useState("");
+  const [walletLoadError, setWalletLoadError] = useState("");
   const [refreshing, setRefreshing] = useState(false);
 
   const recentRef = useRef(null);
   const orderRef = useRef(null);
   const wishlistRef = useRef(null);
   const walletRef = useRef(null);
+  const reviewRef = useRef(null);
   const favoriteRef = useRef(null);
+
+  const requestedUserId = useMemo(() => {
+    const raw = searchParams.get("user_id");
+    if (!raw) return null;
+    const parsed = Number(raw);
+    if (!Number.isInteger(parsed) || parsed <= 0) return null;
+    return parsed;
+  }, [searchParams]);
+
+  const viewingUserId = requestedUserId ?? Number(user?.id || 0);
+  const canEditProfile = Boolean(profile?.id && user?.id && Number(profile.id) === Number(user.id));
 
   const loadExtras = async () => {
     setRefreshing(true);
     setExtrasError("");
+    setWalletLoadError("");
 
-    const [sm, rv, od, ws, wl, fp] = await Promise.allSettled([
+    const [sm, rv, od, ws, wl, mr, fp] = await Promise.allSettled([
       api.mypage.summary(),
       api.mypage.recentViews(),
       api.orders.list(),
       api.mypage.wishlist(),
       api.mypage.wallet(),
+      api.mypage.myReviews(),
       api.mypage.favoritePosts(false),
     ]);
 
@@ -158,44 +214,88 @@ export default function Mypage() {
     setOrders(od.status === "fulfilled" ? od.value || [] : []);
     setWishlist(ws.status === "fulfilled" ? ws.value || [] : []);
     setWallet(wl.status === "fulfilled" ? wl.value || null : null);
+    const loadedReviews = mr.status === "fulfilled" ? mr.value || [] : [];
+    setMyReviews(loadedReviews);
+    setReviewDrafts((prev) => {
+      const next = {};
+      loadedReviews.forEach((review) => {
+        const existing = prev[review.id];
+        next[review.id] = {
+          rating: Number(existing?.rating ?? review.rating ?? 5),
+          content: existing?.content ?? review.content ?? "",
+        };
+      });
+      return next;
+    });
     setFavoritePosts(fp.status === "fulfilled" ? fp.value || [] : []);
+    setWalletLoadError(wl.status === "rejected" ? TEXT.walletLoadFail : "");
 
-    if ([sm, rv, od, ws, wl, fp].some((result) => result.status === "rejected")) {
+    if ([sm, rv, od, ws, wl, mr, fp].some((result) => result.status === "rejected")) {
       setExtrasError(TEXT.partialLoad);
     }
 
     setRefreshing(false);
   };
 
-  const loadMyProfile = async () => {
-    if (!user) return;
+  const loadProfileByUserId = async (targetUserId, withMessage = false) => {
+    if (!targetUserId) return;
     setProfileErr("");
-    setProfileMsg("");
+    if (!withMessage) {
+      setProfileMsg("");
+    }
+    setProfileLoading(true);
     try {
-      const u = await api.users.getProfileByUserId(user.id);
+      const u = await api.users.getProfileByUserId(targetUserId);
       setProfile(u);
       setEdit({ name: u.name || "", phone: u.phone || "", address: u.address || "" });
-      setProfileMsg(TEXT.viewMyInfoDone.replace("{id}", String(user.id)));
+      setTargetUserIdInput(String(targetUserId));
+      if (withMessage) {
+        if (Number(targetUserId) === Number(user?.id)) {
+          setProfileMsg(TEXT.viewMyInfoDone.replace("{id}", String(targetUserId)));
+        } else {
+          setProfileMsg(TEXT.viewMemberInfoDone.replace("{id}", String(targetUserId)));
+        }
+      }
     } catch (err) {
-      setProfileErr(err instanceof Error ? err.message : TEXT.saveFail);
+      setProfile(null);
+      setProfileErr(err instanceof Error ? err.message : TEXT.profileLoadFail);
+    } finally {
+      setProfileLoading(false);
     }
   };
 
+  const loadMyProfile = async () => {
+    if (!user?.id) return;
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.delete("user_id");
+      return next;
+    });
+    await loadProfileByUserId(Number(user.id), true);
+  };
+
+  const loadTargetProfile = async () => {
+    const parsed = Number(targetUserIdInput);
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      setProfileErr(TEXT.invalidUserId);
+      setProfileMsg("");
+      return;
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("user_id", String(parsed));
+      return next;
+    });
+    await loadProfileByUserId(parsed, true);
+  };
+
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     let active = true;
 
     (async () => {
-      try {
-        const u = await api.users.getProfileByUserId(user.id);
-        if (!active) return;
-        setProfile(u);
-        setEdit({ name: u.name || "", phone: u.phone || "", address: u.address || "" });
-      } catch {
-        if (!active) return;
-        setProfile(null);
-      }
-
+      const targetUserId = viewingUserId || Number(user.id);
+      await loadProfileByUserId(targetUserId, false);
       if (active) {
         await loadExtras();
       }
@@ -204,15 +304,20 @@ export default function Mypage() {
     return () => {
       active = false;
     };
-  }, [user]);
+  }, [user?.id, viewingUserId]);
 
   const save = async () => {
-    if (!user) return;
+    if (!profile?.id) return;
+    if (!canEditProfile) {
+      setProfileErr(TEXT.otherProfileReadonly);
+      setProfileMsg("");
+      return;
+    }
     setProfileErr("");
     setProfileMsg("");
     setSavingProfile(true);
     try {
-      const updated = await api.users.update(user.id, edit);
+      const updated = await api.users.update(profile.id, edit);
       setProfile(updated);
       setProfileMsg(TEXT.saveDone);
     } catch (err) {
@@ -282,6 +387,64 @@ export default function Mypage() {
     await loadExtras();
   };
 
+  const changeReviewDraft = (reviewId, key, value) => {
+    setReviewDrafts((prev) => ({
+      ...prev,
+      [reviewId]: {
+        rating: Number(prev[reviewId]?.rating ?? 5),
+        content: prev[reviewId]?.content ?? "",
+        [key]: value,
+      },
+    }));
+  };
+
+  const saveMyReview = async (reviewId) => {
+    const draft = reviewDrafts[reviewId];
+    const nextContent = String(draft?.content || "").trim();
+    const nextRating = Number(draft?.rating ?? 0);
+    setReviewActionError("");
+    setReviewActionMessage("");
+
+    if (!nextContent) {
+      setReviewActionError(TEXT.reviewContentRequired);
+      return;
+    }
+    if (!Number.isInteger(nextRating) || nextRating < 1 || nextRating > 5) {
+      setReviewActionError(TEXT.reviewRatingRange);
+      return;
+    }
+
+    setSavingReviewId(reviewId);
+    try {
+      await api.mypage.updateReview(reviewId, { rating: nextRating, content: nextContent });
+      setReviewActionMessage(TEXT.reviewSaved);
+      await loadExtras();
+    } catch (err) {
+      setReviewActionError(err instanceof Error ? err.message : TEXT.reviewUpdateFail);
+    } finally {
+      setSavingReviewId(null);
+    }
+  };
+
+  const deleteMyReview = async (reviewId) => {
+    setReviewActionError("");
+    setReviewActionMessage("");
+    if (!window.confirm(TEXT.reviewDeleteAsk)) {
+      return;
+    }
+
+    setDeletingReviewId(reviewId);
+    try {
+      await api.mypage.deleteReview(reviewId, `mypage-review-${reviewId}`);
+      setReviewActionMessage(TEXT.reviewDeleted);
+      await loadExtras();
+    } catch (err) {
+      setReviewActionError(err instanceof Error ? err.message : TEXT.reviewDeleteFail);
+    } finally {
+      setDeletingReviewId(null);
+    }
+  };
+
   const scrollToSection = (ref) => {
     if (!ref?.current) return;
     ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -299,12 +462,38 @@ export default function Mypage() {
     [summaryFromServer, recentViews, orders, wishlist, wallet],
   );
 
-  if (!profile) {
+  if (profileLoading) {
     return (
       <PageLayout hideIntro>
         <div className="mx-auto max-w-6xl rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
           <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
           {TEXT.loading}
+        </div>
+      </PageLayout>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <PageLayout hideIntro>
+        <div className="mx-auto max-w-3xl rounded-2xl border border-red-200 bg-card p-8">
+          <p className="text-sm font-semibold text-red-600">{profileErr || TEXT.profileLoadFail}</p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={loadMyProfile}
+              className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-semibold hover:bg-secondary"
+            >
+              {TEXT.viewMyInfo}
+            </button>
+            <button
+              type="button"
+              onClick={() => loadProfileByUserId(viewingUserId, true)}
+              className="inline-flex h-10 items-center rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90"
+            >
+              {TEXT.refresh}
+            </button>
+          </div>
         </div>
       </PageLayout>
     );
@@ -322,6 +511,10 @@ export default function Mypage() {
                 <Mail size={13} />
                 {profile.email}
               </p>
+              <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">
+                {TEXT.viewingUserId}: {profile.id}
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">{TEXT.idorHint}</p>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
@@ -343,8 +536,15 @@ export default function Mypage() {
                 {TEXT.goBooks}
               </Link>
               <Link to="/orders" className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-semibold hover:bg-secondary">
-                {TEXT.viewAllOrders}
+                {TEXT.ordersShortcut}
               </Link>
+              <button
+                type="button"
+                onClick={() => scrollToSection(walletRef)}
+                className="inline-flex h-10 items-center rounded-xl border border-border px-4 text-sm font-semibold hover:bg-secondary"
+              >
+                {TEXT.couponsShortcut}
+              </button>
             </div>
           </div>
 
@@ -367,6 +567,37 @@ export default function Mypage() {
                 <h2 className="text-lg font-bold">{TEXT.profile}</h2>
               </div>
               <p className="mb-4 text-sm text-muted-foreground">{TEXT.profileHint}</p>
+              <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50/70 p-3">
+                <p className="text-xs font-semibold text-amber-800">
+                  {TEXT.viewingUserId}: {profile.id}
+                </p>
+                <p className="mt-1 text-xs text-amber-700">{TEXT.idorHint}</p>
+                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <label className="block flex-1">
+                    <span className="mb-1 block text-xs font-semibold text-amber-900">{TEXT.userIdLabel}</span>
+                    <input
+                      className="w-full rounded-xl border border-amber-300 bg-white px-3 py-2 text-sm"
+                      value={targetUserIdInput}
+                      onChange={(e) => setTargetUserIdInput(e.target.value)}
+                      placeholder={TEXT.userIdPlaceholder}
+                    />
+                  </label>
+                  <button
+                    type="button"
+                    onClick={loadTargetProfile}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-amber-300 bg-white px-4 text-sm font-semibold text-amber-800 hover:bg-amber-100"
+                  >
+                    {TEXT.viewTargetInfo}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={loadMyProfile}
+                    className="inline-flex h-10 items-center justify-center rounded-xl border border-border bg-background px-4 text-sm font-semibold hover:bg-secondary"
+                  >
+                    {TEXT.viewMyInfo}
+                  </button>
+                </div>
+              </div>
 
               <div className="space-y-3">
                 <label className="block">
@@ -401,12 +632,13 @@ export default function Mypage() {
 
               {profileErr && <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{profileErr}</p>}
               {profileMsg && <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{profileMsg}</p>}
+              {!canEditProfile && <p className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">{TEXT.otherProfileReadonly}</p>}
 
               <button
                 type="button"
                 className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-primary px-4 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
                 onClick={save}
-                disabled={savingProfile}
+                disabled={savingProfile || !canEditProfile}
               >
                 <Save size={14} />
                 {savingProfile ? TEXT.processing : TEXT.save}
@@ -493,7 +725,20 @@ export default function Mypage() {
                 <div className="space-y-2">
                   {recentViews.slice(0, 12).map((rv) => (
                     <div key={rv.id} className="rounded-xl border border-border bg-background/80 px-3 py-2">
-                      <p className="text-sm font-semibold">{rv.title}</p>
+                      {(() => {
+                        const bookId = extractBookId(rv);
+                        return (
+                          <p className="text-sm font-semibold">
+                            {bookId ? (
+                              <Link to={`/book/${bookId}`} className="hover:text-primary hover:underline">
+                                {rv.title || rv.bookTitle || rv.book_title || `BOOK #${bookId}`}
+                              </Link>
+                            ) : (
+                              rv.title || rv.bookTitle || rv.book_title || "도서 정보 없음"
+                            )}
+                          </p>
+                        );
+                      })()}
                       <p className="mt-0.5 text-xs text-muted-foreground">
                         {rv.author || "-"} | {formatDate(rv.viewedAt)}
                       </p>
@@ -512,19 +757,90 @@ export default function Mypage() {
                   {wishlist.slice(0, 20).map((w) => (
                     <div key={w.id} className="flex items-center justify-between rounded-xl border border-border bg-background/80 px-3 py-2">
                       <p className="mr-3 text-sm font-medium">
-                        {w.bookId ? (
-                          <Link to={`/book/${w.bookId}`} className="hover:text-primary hover:underline">
-                            {w.title}
-                          </Link>
-                        ) : (
-                          w.title
-                        )}
+                        {(() => {
+                          const bookId = extractBookId(w);
+                          return bookId ? (
+                            <Link to={`/book/${bookId}`} className="hover:text-primary hover:underline">
+                              {w.title || w.bookTitle || w.book_title || `BOOK #${bookId}`}
+                            </Link>
+                          ) : (
+                            w.title || w.bookTitle || w.book_title || "도서 정보 없음"
+                          );
+                        })()}
                       </p>
                       <button className="text-xs font-semibold text-red-500 hover:text-red-600" onClick={() => removeWishlist(w.id)}>
                         {TEXT.remove}
                       </button>
                     </div>
                   ))}
+                </div>
+              )}
+            </section>
+
+            <section ref={reviewRef} className="rounded-2xl border border-border bg-card p-5">
+              <h2 className="mb-4 text-lg font-bold">{TEXT.myReviews}</h2>
+              {reviewActionError && <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{reviewActionError}</p>}
+              {reviewActionMessage && <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{reviewActionMessage}</p>}
+              {myReviews.length === 0 ? (
+                <p className="rounded-xl bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">{TEXT.emptyMyReviews}</p>
+              ) : (
+                <div className="space-y-3">
+                  {myReviews.slice(0, 20).map((review) => {
+                    const draft = reviewDrafts[review.id] || { rating: Number(review.rating || 5), content: review.content || "" };
+                    const reviewBookId = extractBookId(review);
+                    return (
+                      <div key={review.id} className="rounded-xl border border-border bg-background/80 p-3">
+                        <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">
+                          <Link to={`/book/${reviewBookId || review.bookId}`} className="font-semibold hover:text-primary hover:underline">
+                            {review.bookTitle || review.book_title || (reviewBookId ? `BOOK #${reviewBookId}` : `BOOK #${review.bookId}`)}
+                          </Link>
+                          <span className="text-xs text-muted-foreground">{formatDate(review.createdAt)}</span>
+                        </div>
+                        <div className="grid gap-2 sm:grid-cols-[120px_1fr]">
+                          <label className="text-xs text-muted-foreground">
+                            {TEXT.ratingLabel}
+                            <select
+                              className="mt-1 w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm"
+                              value={String(draft.rating)}
+                              onChange={(e) => changeReviewDraft(review.id, "rating", Number(e.target.value))}
+                            >
+                              {[1, 2, 3, 4, 5].map((score) => (
+                                <option key={score} value={score}>
+                                  {score}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                          <label className="text-xs text-muted-foreground">
+                            {TEXT.reviewContentLabel}
+                            <textarea
+                              className="mt-1 h-24 w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm"
+                              value={draft.content}
+                              onChange={(e) => changeReviewDraft(review.id, "content", e.target.value)}
+                            />
+                          </label>
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => saveMyReview(review.id)}
+                            disabled={savingReviewId === review.id}
+                            className="inline-flex h-9 items-center rounded-lg bg-primary px-3 text-xs font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-60"
+                          >
+                            {savingReviewId === review.id ? TEXT.processing : TEXT.reviewEditSave}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => deleteMyReview(review.id)}
+                            disabled={deletingReviewId === review.id}
+                            className="inline-flex h-9 items-center rounded-lg border border-red-200 px-3 text-xs font-semibold text-red-600 hover:bg-red-50 disabled:opacity-60"
+                          >
+                            {deletingReviewId === review.id ? TEXT.processing : TEXT.reviewDelete}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </section>
@@ -554,6 +870,7 @@ export default function Mypage() {
 
             <section ref={walletRef} className="rounded-2xl border border-border bg-card p-5">
               <h2 className="mb-4 text-lg font-bold">{TEXT.wallet}</h2>
+              {walletLoadError && <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{walletLoadError}</p>}
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="rounded-xl border border-border bg-background/80 p-3">
                   <p className="text-xs text-muted-foreground">{TEXT.currentPoints}</p>
@@ -583,7 +900,7 @@ export default function Mypage() {
                             {String(c.discountType).toUpperCase() === "PERCENT"
                               ? `${c.discountValue}%`
                               : `${formatMoney(c.discountValue)} KRW`}{" "}
-                            | remaining: {c.remainingCount}
+                            | {TEXT.remainingCount}: {c.remainingCount}
                           </p>
                         </div>
                       ))}

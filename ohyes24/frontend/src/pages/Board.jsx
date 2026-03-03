@@ -81,6 +81,7 @@ export default function Board() {
   const [formTitle, setFormTitle] = useState("");
   const [formContent, setFormContent] = useState("");
   const [editingId, setEditingId] = useState(null);
+  const [pendingFiles, setPendingFiles] = useState([]);
 
   const clearPreview = useCallback(() => {
     setPreview((prev) => {
@@ -235,6 +236,31 @@ export default function Board() {
     setEditingId(null);
     setFormTitle("");
     setFormContent("");
+    setPendingFiles([]);
+  };
+
+  const appendPendingFiles = (files) => {
+    const rows = Array.from(files || []);
+    if (!rows.length) return;
+    setPendingFiles((prev) => {
+      const next = [...prev];
+      rows.forEach((file) => {
+        const duplicated = next.some(
+          (candidate) =>
+            candidate.name === file.name &&
+            candidate.size === file.size &&
+            candidate.lastModified === file.lastModified,
+        );
+        if (!duplicated) {
+          next.push(file);
+        }
+      });
+      return next;
+    });
+  };
+
+  const removePendingFile = (targetIndex) => {
+    setPendingFiles((prev) => prev.filter((_, index) => index !== targetIndex));
   };
 
   const onSearch = (e) => {
@@ -266,16 +292,39 @@ export default function Board() {
 
     setSubmitting(true);
     try {
+      const wasEditing = Boolean(editingId);
       const payload = { title: formTitle, content: formContent };
       const saved = editingId
         ? await api.board.update(editingId, payload)
         : await api.board.create(payload);
 
-      clearPostForm();
-      setMessage(editingId ? "게시글이 수정되었습니다." : "게시글이 등록되었습니다.");
+      let uploadedCount = 0;
+      let uploadFailedCount = 0;
+      if (!wasEditing && saved?.id && pendingFiles.length > 0) {
+        for (const file of pendingFiles) {
+          try {
+            await api.board.uploadAttachment(saved.id, file);
+            uploadedCount += 1;
+          } catch {
+            uploadFailedCount += 1;
+          }
+        }
+      }
 
-      const targetPage = editingId ? page : 0;
-      if (!editingId) setPage(0);
+      clearPostForm();
+      if (wasEditing) {
+        setMessage("게시글이 수정되었습니다.");
+      } else if (uploadedCount > 0) {
+        setMessage(`게시글과 첨부파일 ${uploadedCount}개가 등록되었습니다.`);
+      } else {
+        setMessage("게시글이 등록되었습니다.");
+      }
+      if (uploadFailedCount > 0) {
+        setError(`게시글은 등록되었지만 첨부파일 ${uploadFailedCount}개 업로드에 실패했습니다.`);
+      }
+
+      const targetPage = wasEditing ? page : 0;
+      if (!wasEditing) setPage(0);
       await loadPosts(targetPage);
       if (saved?.id) setSelectedId(saved.id);
     } catch (err) {
@@ -763,6 +812,49 @@ export default function Board() {
                 rows={6}
                 className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:border-primary"
               />
+              {editingId ? (
+                <p className="rounded-xl border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                  첨부파일은 상단 상세영역에서 직접 업로드/삭제할 수 있습니다.
+                </p>
+              ) : (
+                <div className="rounded-xl border border-border bg-background px-3 py-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs font-semibold text-foreground">첨부파일 (작성과 동시에 업로드)</p>
+                    <label className="inline-flex cursor-pointer items-center gap-1 rounded-lg border border-border px-2 py-1 text-xs hover:bg-secondary">
+                      <FileUp size={13} />
+                      파일 추가
+                      <input
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={(e) => {
+                          appendPendingFiles(e.target.files);
+                          e.target.value = "";
+                        }}
+                      />
+                    </label>
+                  </div>
+
+                  {pendingFiles.length === 0 ? (
+                    <p className="mt-2 text-xs text-muted-foreground">선택된 파일이 없습니다.</p>
+                  ) : (
+                    <div className="mt-2 space-y-1">
+                      {pendingFiles.map((file, index) => (
+                        <div key={`${file.name}-${file.size}-${file.lastModified}`} className="flex items-center justify-between rounded-lg border border-border px-2 py-1.5 text-xs">
+                          <p className="truncate pr-2">{file.name}</p>
+                          <button
+                            type="button"
+                            className="text-red-600 hover:underline"
+                            onClick={() => removePendingFile(index)}
+                          >
+                            제거
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex items-center gap-2">
                 <button
                   type="submit"

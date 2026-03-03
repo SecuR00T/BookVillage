@@ -12,6 +12,7 @@ import {
   BookOpenText,
   Truck,
   ShieldCheck,
+  Loader2,
 } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
@@ -27,11 +28,37 @@ const TAB = {
 };
 
 const formatPrice = (value) => `${Number(value || 0).toLocaleString()}원`;
+const formatDate = (value) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("ko-KR", { month: "long", day: "numeric", weekday: "short" });
+};
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("ko-KR", { month: "numeric", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: false });
+};
 
 const getDisplayRating = (book) => {
   const n = Number(book?.rating);
   if (!Number.isFinite(n)) return null;
   return n > 5 ? n / 2 : n;
+};
+
+const applyBookReviewStats = (targetBook, reviewList) => {
+  if (!targetBook || !Array.isArray(reviewList)) return targetBook;
+  const count = reviewList.length;
+  if (count <= 0) {
+    return { ...targetBook, rating: null, reviewCount: 0 };
+  }
+  const average = reviewList.reduce((sum, review) => sum + Number(review?.rating || 0), 0) / count;
+  return {
+    ...targetBook,
+    rating: Number(average.toFixed(1)),
+    reviewCount: count,
+  };
 };
 
 const buildGeneratedSynopsis = (book) => {
@@ -80,13 +107,34 @@ const BookDetail = () => {
   const [activeTab, setActiveTab] = useState(TAB.INTRO);
   const [reviewMessage, setReviewMessage] = useState("");
   const [deletingReviewId, setDeletingReviewId] = useState(null);
+  const [zipcode, setZipcode] = useState("06236");
+  const [shippingInfo, setShippingInfo] = useState(null);
+  const [shippingLoading, setShippingLoading] = useState(false);
+  const [shippingError, setShippingError] = useState("");
+
+  const loadShippingInfo = async (bookId, zipInput) => {
+    setShippingLoading(true);
+    setShippingError("");
+    try {
+      const value = await api.books.shippingInfo(bookId, (zipInput || "").trim() || undefined);
+      setShippingInfo(value || null);
+    } catch (err) {
+      setShippingInfo(null);
+      setShippingError(err instanceof Error ? err.message : "배송 정보를 불러오지 못했습니다.");
+    } finally {
+      setShippingLoading(false);
+    }
+  };
 
   const reloadReviews = async (bookId) => {
     try {
       const list = await api.reviews.listByBook(bookId);
-      setReviews(list || []);
+      const rows = list || [];
+      setReviews(rows);
+      return rows;
     } catch {
       setReviews([]);
+      return null;
     }
   };
 
@@ -110,8 +158,13 @@ const BookDetail = () => {
 
         setBook(currentBook);
         setActiveTab(TAB.INTRO);
+        await loadShippingInfo(numericId, zipcode);
 
-        await reloadReviews(numericId);
+        const loadedReviews = await reloadReviews(numericId);
+        if (!active) return;
+        if (loadedReviews) {
+          setBook((prev) => applyBookReviewStats(prev || currentBook, loadedReviews));
+        }
       } catch {
         if (!active) return;
         setBook(null);
@@ -161,7 +214,10 @@ const BookDetail = () => {
       setReviewText("");
       setReviewRating(5);
       setReviewMessage("리뷰가 등록되었습니다.");
-      await reloadReviews(book.id);
+      const loadedReviews = await reloadReviews(book.id);
+      if (loadedReviews) {
+        setBook((prev) => applyBookReviewStats(prev, loadedReviews));
+      }
     } catch (e2) {
       setReviewMessage(e2 instanceof Error ? e2.message : "리뷰 등록에 실패했습니다.");
     }
@@ -174,6 +230,10 @@ const BookDetail = () => {
     }
     addItem({ bookId: book.id, title: book.title, price: Number(book.price) }, 1);
     navigate("/cart");
+  };
+
+  const handleShippingSearch = async () => {
+    await loadShippingInfo(book.id, zipcode);
   };
 
   const likeReview = async (reviewId) => {
@@ -209,7 +269,10 @@ const BookDetail = () => {
     try {
       await api.reviews.delete(reviewId, `book-${book.id}-review-delete`);
       setReviewMessage("리뷰가 삭제되었습니다.");
-      await reloadReviews(book.id);
+      const loadedReviews = await reloadReviews(book.id);
+      if (loadedReviews) {
+        setBook((prev) => applyBookReviewStats(prev, loadedReviews));
+      }
     } catch (e2) {
       setReviewMessage(e2 instanceof Error ? e2.message : "리뷰 삭제에 실패했습니다.");
     } finally {
@@ -301,6 +364,57 @@ const BookDetail = () => {
                   <ShieldCheck size={14} className="text-primary" />
                   안전 결제 및 주문 보호
                 </div>
+              </div>
+
+              <div className="rounded-xl border border-border p-4 space-y-3">
+                <div className="flex items-center gap-2 text-sm font-semibold">
+                  <Truck size={16} className="text-primary" />
+                  배송정보 표시
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <input
+                    type="text"
+                    value={zipcode}
+                    onChange={(e) => setZipcode(e.target.value)}
+                    placeholder="우편번호 입력"
+                    className="h-10 flex-1 rounded-lg border border-input bg-background px-3 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleShippingSearch}
+                    disabled={shippingLoading}
+                    className="h-10 rounded-lg border border-border px-4 text-sm font-semibold hover:bg-secondary disabled:opacity-60"
+                  >
+                    {shippingLoading ? "조회 중..." : "도착 예정일 조회"}
+                  </button>
+                </div>
+                {shippingError && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-600">{shippingError}</p>}
+                {shippingInfo && (
+                  <div className="grid grid-cols-1 gap-2 text-xs text-muted-foreground sm:grid-cols-2">
+                    <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">예상 도착일</p>
+                      <p className="mt-0.5 text-sm font-bold text-foreground">{formatDate(shippingInfo.estimatedArrivalDate)}</p>
+                    </div>
+                    <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">도착 예정 시각</p>
+                      <p className="mt-0.5 text-sm font-bold text-foreground">{formatDateTime(shippingInfo.estimatedArrivalDateTime)}</p>
+                    </div>
+                    <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">예상 소요일</p>
+                      <p className="mt-0.5 text-sm font-bold text-foreground">{shippingInfo.etaDays} 영업일</p>
+                    </div>
+                    <div className="rounded-lg bg-secondary/50 px-3 py-2">
+                      <p className="text-[11px] text-muted-foreground">출고 마감 기준</p>
+                      <p className="mt-0.5 text-sm font-bold text-foreground">매일 {shippingInfo.orderCutoffTime} 이전 주문</p>
+                    </div>
+                  </div>
+                )}
+                {shippingLoading && (
+                  <p className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                    <Loader2 size={13} className="animate-spin" />
+                    실시간 도착 예정일 계산 중
+                  </p>
+                )}
               </div>
             </div>
           </div>

@@ -26,7 +26,7 @@ export default function BookCard({ book, index = 0 }) {
   const showDiscount = discount > 0 && originalPrice > book.price;
   const hasCoverImage = Boolean(book.coverImageUrl) && !imageError;
 
-  const rawRating = typeof book.rating === "number" ? book.rating : 4.4;
+  const rawRating = typeof book.rating === "number" ? book.rating : 0;
   const normalizedRating = rawRating > 5 ? rawRating / 2 : rawRating;
   const reviewCount = typeof book.reviewCount === "number" ? book.reviewCount : 0;
 

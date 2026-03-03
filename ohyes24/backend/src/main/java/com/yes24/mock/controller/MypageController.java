@@ -1,5 +1,8 @@
 package com.yes24.mock.controller;
 
+import com.yes24.mock.dto.MyReviewDto;
+import com.yes24.mock.dto.ReviewDto;
+import com.yes24.mock.dto.ReviewRequest;
 import com.yes24.mock.security.UserPrincipal;
 import com.yes24.mock.service.LearningFeatureService;
 import com.yes24.mock.service.ReviewService;
@@ -90,6 +93,21 @@ public class MypageController {
             @PathVariable Long postId) {
         learningFeatureService.deleteFavoritePost(principal.getUserId(), postId);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/reviews")
+    public ResponseEntity<List<MyReviewDto>> myReviews(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(reviewService.getReviewsByUser(principal.getUserId()));
+    }
+
+    @PutMapping("/reviews/{reviewId}")
+    public ResponseEntity<ReviewDto> updateReview(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long reviewId,
+            @RequestBody(required = false) ReviewRequest request) {
+        Integer rating = request != null ? request.getRating() : null;
+        String content = request != null ? request.getContent() : null;
+        return ResponseEntity.ok(reviewService.updateMyReview(principal.getUserId(), reviewId, rating, content));
     }
 
     @DeleteMapping("/reviews/{reviewId}")

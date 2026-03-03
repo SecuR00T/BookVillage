@@ -1,5 +1,6 @@
 package com.yes24.mock.service;
 
+import com.yes24.mock.dto.MyReviewDto;
 import com.yes24.mock.dto.ReviewDto;
 import com.yes24.mock.entity.Review;
 import com.yes24.mock.repository.ReviewRepository;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
@@ -91,6 +93,31 @@ public class ReviewService {
                 .collect(Collectors.toList());
     }
 
+    public List<MyReviewDto> getReviewsByUser(Long userId) {
+        return jdbcTemplate.query(
+                "SELECT r.id, r.book_id, b.title AS book_title, r.rating, r.content, r.summary, r.image_url, r.created_at, " +
+                        "(SELECT COUNT(1) FROM review_likes rl WHERE rl.review_id = r.id) AS like_count, " +
+                        "(SELECT COUNT(1) FROM review_reports rr WHERE rr.review_id = r.id) AS report_count " +
+                        "FROM reviews r JOIN books b ON b.id = r.book_id WHERE r.user_id = ? ORDER BY r.created_at DESC",
+                (rs, rowNum) -> {
+                    MyReviewDto dto = new MyReviewDto();
+                    dto.setId(rs.getLong("id"));
+                    dto.setBookId(rs.getLong("book_id"));
+                    dto.setBookTitle(rs.getString("book_title"));
+                    dto.setRating(rs.getInt("rating"));
+                    dto.setContent(rs.getString("content"));
+                    dto.setSummary(rs.getString("summary"));
+                    dto.setImageUrl(rs.getString("image_url"));
+                    dto.setLikeCount(rs.getLong("like_count"));
+                    dto.setReportCount(rs.getLong("report_count"));
+                    Timestamp createdAt = rs.getTimestamp("created_at");
+                    dto.setCreatedAt(createdAt != null ? createdAt.toLocalDateTime() : null);
+                    return dto;
+                },
+                userId
+        );
+    }
+
     @Transactional
     public ReviewDto likeReview(Long userId, Long reviewId) {
         Integer recentCount = jdbcTemplate.queryForObject(
@@ -117,6 +144,16 @@ public class ReviewService {
     @Transactional
     public void reportReview(Long userId, Long reviewId, String reason) {
         String normalizedReason = reason == null ? "" : reason.trim();
+        Integer alreadyReported = jdbcTemplate.queryForObject(
+                "SELECT COUNT(1) FROM review_reports WHERE review_id = ? AND user_id = ?",
+                Integer.class,
+                reviewId,
+                userId
+        );
+        if (alreadyReported != null && alreadyReported > 0) {
+            throw new IllegalArgumentException("Already reported this review.");
+        }
+
         Integer recentCount = jdbcTemplate.queryForObject(
                 "SELECT COUNT(1) FROM review_reports WHERE user_id = ? AND created_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE)",
                 Integer.class,
@@ -127,12 +164,16 @@ public class ReviewService {
             throw new IllegalArgumentException("Too many report requests. Try again later.");
         }
 
-        jdbcTemplate.update(
-                "INSERT INTO review_reports (review_id, user_id, reason) VALUES (?, ?, ?)",
-                reviewId,
-                userId,
-                normalizedReason
-        );
+        try {
+            jdbcTemplate.update(
+                    "INSERT INTO review_reports (review_id, user_id, reason) VALUES (?, ?, ?)",
+                    reviewId,
+                    userId,
+                    normalizedReason
+            );
+        } catch (DuplicateKeyException ex) {
+            throw new IllegalArgumentException("Already reported this review.");
+        }
     }
 
     @Transactional
@@ -149,6 +190,31 @@ public class ReviewService {
         }
 
         reviewRepository.delete(review);
+    }
+
+    @Transactional
+    public ReviewDto updateMyReview(Long userId, Long reviewId, Integer rating, String content) {
+        Review review = reviewRepository.findById(reviewId)
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        if (!review.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Cannot update another user's review");
+        }
+
+        Integer nextRating = rating == null ? review.getRating() : rating;
+        if (nextRating == null || nextRating < 1 || nextRating > 5) {
+            throw new IllegalArgumentException("rating must be between 1 and 5");
+        }
+
+        String nextContent = content == null ? review.getContent() : content.trim();
+        if (nextContent == null || nextContent.isEmpty()) {
+            throw new IllegalArgumentException("content is required");
+        }
+
+        review.setRating(nextRating);
+        review.setContent(nextContent);
+        review.setSummary(buildUnsafeTemplateSummary(nextContent, userId, review.getBookId(), nextRating));
+        review = reviewRepository.save(review);
+        return enrich(review);
     }
 
     private ReviewDto enrich(Review review) {

@@ -1,5 +1,21 @@
 ﻿const API_BASE = "/api";
 const notifyAuthChanged = () => window.dispatchEvent(new Event("ohyes24-auth-changed"));
+const decodeEscapedUnicode = (value) =>
+  typeof value === "string"
+    ? value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
+    : value;
+const decodeEscapedUnicodeDeep = (value) => {
+  if (typeof value === "string") {
+    return decodeEscapedUnicode(value);
+  }
+  if (Array.isArray(value)) {
+    return value.map((item) => decodeEscapedUnicodeDeep(item));
+  }
+  if (value && typeof value === "object") {
+    return Object.fromEntries(Object.entries(value).map(([k, v]) => [k, decodeEscapedUnicodeDeep(v)]));
+  }
+  return value;
+};
 
 const getAuthHeader = () => {
   const creds = sessionStorage.getItem("ohyes24_creds");
@@ -38,10 +54,11 @@ async function request(url, options = {}) {
       throw new Error("\uC11C\uBC84 \uC5F0\uACB0\uC774 \uC77C\uC2DC\uC801\uC73C\uB85C \uBD88\uC548\uC815\uD569\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.");
     }
     const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(err.message || err.error || "Request failed");
+    throw new Error(decodeEscapedUnicode(err.message || err.error || "Request failed"));
   }
   const text = await res.text();
-  return text ? JSON.parse(text) : null;
+  if (!text) return null;
+  return decodeEscapedUnicodeDeep(JSON.parse(text));
 }
 
 export const api = {
@@ -90,6 +107,7 @@ export const api = {
   },
   orders: {
     list: () => request("/orders"),
+    get: (orderId) => request(`/orders/${orderId}`),
     checkout: (payload) => request("/orders/checkout", { method: "POST", body: JSON.stringify(payload) }),
     lookup: (orderNumber) => request(`/orders/lookup?orderNumber=${encodeURIComponent(orderNumber)}`),
     track: (orderId, trackingUrl) => request(`/orders/${orderId}/tracking?trackingUrl=${encodeURIComponent(trackingUrl)}`),
@@ -190,6 +208,8 @@ export const api = {
     summary: () => request("/mypage/summary"),
     recentViews: () => request("/mypage/recent-views"),
     wishlist: () => request("/mypage/wishlist"),
+    myReviews: () => request("/mypage/reviews"),
+    updateReview: (reviewId, data) => request(`/mypage/reviews/${reviewId}`, { method: "PUT", body: JSON.stringify(data) }),
     addWishlist: (bookId) => request("/mypage/wishlist", { method: "POST", body: JSON.stringify({ bookId }) }),
     removeWishlist: (wishlistId) => request(`/mypage/wishlist/${wishlistId}`, { method: "DELETE" }),
     wallet: () => request("/mypage/wallet"),

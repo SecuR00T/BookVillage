@@ -43,3 +43,7 @@ ohyes24/temp_index.html
 ohyes24/frontend/live-index*.js
 ohyes24/frontend/live-index.html
 ohyes24/frontend/dist-*.js
+docker-compose.integration.yml
+docker-compose.integration.yml
+docker-compose.integration.yml
+ohyes24/docker-compose.integration.yml

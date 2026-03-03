@@ -50,7 +50,7 @@
 
   admin-backend:
     build:
-      context: ../2.25_admin/admin/backend
+      context: ../../../2.25_admin/admin/backend
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
@@ -67,7 +67,7 @@
 
   admin-frontend:
     build:
-      context: ../2.25_admin/admin
+      context: ../../../2.25_admin/admin
       dockerfile: Dockerfile.frontend
     restart: unless-stopped
     depends_on:

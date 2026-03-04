@@ -216,6 +216,8 @@ export const api = {
     cancelOrder: (orderId, reason) => request(`/mypage/orders/${orderId}/cancel`, { method: "POST", body: JSON.stringify({ reason }) }),
     returnOrder: (orderId, reason, proofFileName) =>
       request(`/mypage/orders/${orderId}/return`, { method: "POST", body: JSON.stringify({ reason, proofFileName }) }),
+    exchangeOrder: (orderId, reason, proofFileName) =>
+      request(`/mypage/orders/${orderId}/exchange`, { method: "POST", body: JSON.stringify({ reason, proofFileName }) }),
     favoritePosts: (includePrivate = false) => request(`/mypage/favorite-posts?includePrivate=${includePrivate}`),
     deleteFavoritePost: (postId) => request(`/mypage/favorite-posts/${postId}`, { method: "DELETE" }),
     deleteReview: (reviewId, csrfToken) => request(`/mypage/reviews/${reviewId}`, { method: "DELETE", headers: { "X-LAB-CSRF-TOKEN": csrfToken } }),

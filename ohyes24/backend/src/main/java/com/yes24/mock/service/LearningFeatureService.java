@@ -31,6 +31,7 @@ public class LearningFeatureService {
     private final ReviewRepository reviewRepository;
     private final PasswordEncoder passwordEncoder;
     private final SecurityLabService securityLabService;
+    private final PasswordResetMailService passwordResetMailService;
 
     @Transactional
     public Map<String, Object> requestPasswordReset(String email) {
@@ -38,23 +39,26 @@ public class LearningFeatureService {
             throw new IllegalArgumentException("Email is required");
         }
         String normalized = email.trim().toLowerCase(Locale.ROOT);
-        User user = userRepository.findByEmail(normalized).orElse(null);
+        User user = userRepository.findByEmail(normalized)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
         // Intentionally weak token entropy for brute-force training.
         String token = String.format(Locale.ROOT, "%04d", new Random().nextInt(10_000));
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(10);
 
         jdbcTemplate.update(
                 "INSERT INTO password_reset_tokens (user_id, email, token, attempt_count, expires_at) VALUES (?, ?, ?, 0, ?)",
-                user != null ? user.getId() : null,
+                user.getId(),
                 normalized,
                 token,
-                Timestamp.valueOf(LocalDateTime.now().plusMinutes(10))
+                Timestamp.valueOf(expiresAt)
         );
+        passwordResetMailService.sendPasswordResetCode(normalized, token, expiresAt);
 
         String masked = maskEmail(normalized);
-        securityLabService.simulate("REQ-COM-004", user != null ? user.getId() : null, "/api/auth/password-reset/request", normalized);
+        securityLabService.simulate("REQ-COM-004", user.getId(), "/api/auth/password-reset/request", normalized);
 
         Map<String, Object> response = new LinkedHashMap<>();
-        response.put("message", "Password reset requested. In this lab flow, mailbox ownership is not verified.");
+        response.put("message", "Password reset code was sent to your email.");
         response.put("email", masked);
         return response;
     }
@@ -236,14 +240,25 @@ public class LearningFeatureService {
                 userId
         );
         List<Map<String, Object>> coupons = jdbcTemplate.queryForList(
-                "SELECT code, discount_type AS discountType, discount_value AS discountValue, remaining_count AS remainingCount " +
+                "SELECT code, discount_type AS discountType, discount_value AS discountValue, remaining_count AS remainingCount, " +
+                        "valid_from AS validFrom, valid_until AS validUntil, created_at AS createdAt " +
                         "FROM coupons ORDER BY id ASC"
+        );
+        List<Map<String, Object>> couponHistories = jdbcTemplate.queryForList(
+                "SELECT pt.id, pt.coupon_code AS couponCode, pt.amount AS orderAmount, pt.created_at AS usedAt, " +
+                        "o.order_number AS orderNumber " +
+                        "FROM payment_transactions pt " +
+                        "LEFT JOIN orders o ON o.id = pt.order_id " +
+                        "WHERE pt.user_id = ? AND pt.coupon_code IS NOT NULL AND TRIM(pt.coupon_code) <> '' " +
+                        "ORDER BY pt.created_at DESC",
+                userId
         );
 
         Map<String, Object> data = new LinkedHashMap<>();
         data.put("currentPoints", points != null ? points : 0);
         data.put("pointHistories", histories);
         data.put("coupons", coupons);
+        data.put("couponHistories", couponHistories);
         return data;
     }
 
@@ -303,13 +318,18 @@ public class LearningFeatureService {
         order.setStatus("CANCEL_REQUESTED");
         orderRepository.save(order);
     }
-
+
     @Transactional
     public void requestOrderReturn(Long userId, Long orderId, String reason, String proofFileName) {
         Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
         if (!order.getUserId().equals(userId)) {
             throw new IllegalArgumentException("Cannot create return request for another user");
         }
+        String status = order.getStatus() == null ? "" : order.getStatus().toUpperCase(Locale.ROOT);
+        if (!"DELIVERED".equals(status) && !"SHIPPED".equals(status)) {
+            throw new IllegalArgumentException("반품 요청은 배송 중 또는 배송 완료 주문에서만 가능합니다.");
+        }
+
         jdbcTemplate.update(
                 "INSERT INTO order_action_requests (order_id, user_id, action_type, reason, proof_file_name, status) VALUES (?, ?, 'RETURN', ?, ?, 'REQUESTED')",
                 orderId,
@@ -317,7 +337,32 @@ public class LearningFeatureService {
                 reason,
                 proofFileName
         );
+        order.setStatus("RETURN_REQUESTED");
+        orderRepository.save(order);
         securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/return", proofFileName);
+    }
+
+    @Transactional
+    public void requestOrderExchange(Long userId, Long orderId, String reason, String proofFileName) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        if (!order.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Cannot create exchange request for another user");
+        }
+        String status = order.getStatus() == null ? "" : order.getStatus().toUpperCase(Locale.ROOT);
+        if (!"DELIVERED".equals(status) && !"SHIPPED".equals(status)) {
+            throw new IllegalArgumentException("교환 요청은 배송 중 또는 배송 완료 주문에서만 가능합니다.");
+        }
+
+        jdbcTemplate.update(
+                "INSERT INTO order_action_requests (order_id, user_id, action_type, reason, proof_file_name, status) VALUES (?, ?, 'EXCHANGE', ?, ?, 'REQUESTED')",
+                orderId,
+                userId,
+                reason,
+                proofFileName
+        );
+        order.setStatus("EXCHANGE_REQUESTED");
+        orderRepository.save(order);
+        securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/exchange", proofFileName);
     }
 
     public List<Map<String, Object>> getFavoritePosts(Long userId, boolean includePrivate) {
@@ -607,3 +652,8 @@ public class LearningFeatureService {
         return email.charAt(0) + "***" + email.substring(at);
     }
 }
+
+
+
+
+

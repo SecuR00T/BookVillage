@@ -1,11 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "@/api/client";
 import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
   title: "주문 상세",
-  description: "주문 정보와 주문 상품을 상세하게 확인할 수 있습니다.",
+  description: "주문 정보와 상품, 배송 추적, 취소/반품/교환 요청 상태를 확인할 수 있습니다.",
   goOrders: "주문 목록으로 돌아가기",
   loadFail: "주문 상세를 불러오지 못했습니다.",
   notFound: "주문 정보를 찾을 수 없습니다.",
@@ -22,9 +22,37 @@ const TEXT = {
   qty: "수량",
   unitPrice: "단가",
   lineTotal: "합계",
-  trackingPlaceholder: "배송 추적 URL 입력 (실습 시뮬레이션)",
+  trackingPlaceholder: "배송 추적 URL 입력",
   trackingButton: "배송 추적",
   trackingResult: "추적 결과",
+  actionHeader: "취소/반품/교환 요청",
+  cancelButton: "주문 취소 요청",
+  refundButton: "환불(반품) 요청",
+  exchangeButton: "교환 요청",
+  reasonLabel: "요청 사유",
+  reasonPlaceholder: "요청 사유를 입력해 주세요.",
+  proofLabel: "증빙 파일명(선택)",
+  proofPlaceholder: "예: damaged_box.jpg",
+  actionProcessing: "처리 중...",
+  cancelDone: "취소 요청이 접수되었습니다.",
+  refundDone: "환불(반품) 요청이 접수되었습니다.",
+  exchangeDone: "교환 요청이 접수되었습니다.",
+  actionBlocked: "현재 상태에서는 취소/반품/교환 요청을 할 수 없습니다.",
+};
+
+const statusLabel = (status) => {
+  const key = String(status || "").toUpperCase();
+  const map = {
+    PENDING: "결제 대기",
+    PAID: "결제 완료",
+    SHIPPED: "배송 중",
+    DELIVERED: "배송 완료",
+    CANCELLED: "주문 취소",
+    CANCEL_REQUESTED: "취소 요청",
+    RETURN_REQUESTED: "환불(반품) 요청",
+    EXCHANGE_REQUESTED: "교환 요청",
+  };
+  return map[key] || (status || "-");
 };
 
 const formatMoney = (value) => `${Number(value || 0).toLocaleString("ko-KR")} KRW`;
@@ -50,20 +78,40 @@ export default function OrderDetail() {
   const [loading, setLoading] = useState(true);
   const [trackingUrl, setTrackingUrl] = useState("");
   const [trackingResult, setTrackingResult] = useState("");
+  const [reason, setReason] = useState("");
+  const [proofFileName, setProofFileName] = useState("");
+  const [actionMessage, setActionMessage] = useState("");
+  const [actionError, setActionError] = useState("");
+  const [actionLoading, setActionLoading] = useState(false);
 
-  useEffect(() => {
+  const loadOrder = async () => {
     if (!orderId) return;
     setLoading(true);
     setError("");
+    try {
+      const value = await api.orders.get(orderId);
+      setOrder(value || null);
+    } catch (err) {
+      setOrder(null);
+      setError(err instanceof Error ? err.message : TEXT.loadFail);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    api.orders
-      .get(orderId)
-      .then((v) => setOrder(v || null))
-      .catch((err) => setError(err instanceof Error ? err.message : TEXT.loadFail))
-      .finally(() => setLoading(false));
+  useEffect(() => {
+    loadOrder();
   }, [orderId]);
 
-  const items = useMemo(() => (order?.items || []).map((v) => ({ ...v, lineTotal: Number(v.quantity || 0) * Number(v.unitPrice || 0) })), [order]);
+  const items = useMemo(
+    () => (order?.items || []).map((v) => ({ ...v, lineTotal: Number(v.quantity || 0) * Number(v.unitPrice || 0) })),
+    [order],
+  );
+
+  const normalizedStatus = String(order?.status || "").toUpperCase();
+  const canCancel = normalizedStatus === "PENDING" || normalizedStatus === "PAID";
+  const canRefund = normalizedStatus === "SHIPPED" || normalizedStatus === "DELIVERED";
+  const canExchange = normalizedStatus === "SHIPPED" || normalizedStatus === "DELIVERED";
 
   const track = async () => {
     if (!order?.id || !trackingUrl.trim()) return;
@@ -71,7 +119,61 @@ export default function OrderDetail() {
       const result = await api.orders.track(order.id, trackingUrl.trim());
       setTrackingResult(`${result.status} (${result.currentLocation})`);
     } catch (err) {
-      setTrackingResult(err instanceof Error ? err.message : "추적에 실패했습니다.");
+      setTrackingResult(err instanceof Error ? err.message : "배송 추적에 실패했습니다.");
+    }
+  };
+
+  const requestCancel = async () => {
+    if (!order?.id || !canCancel) return;
+    if (!window.confirm("이 주문을 취소 요청할까요?")) return;
+
+    setActionLoading(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      await api.mypage.cancelOrder(order.id, reason.trim() || "사용자 요청");
+      setActionMessage(TEXT.cancelDone);
+      await loadOrder();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "취소 요청에 실패했습니다.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const requestRefund = async () => {
+    if (!order?.id || !canRefund) return;
+    if (!window.confirm("환불(반품) 요청을 접수할까요?")) return;
+
+    setActionLoading(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      await api.mypage.returnOrder(order.id, reason.trim() || "사용자 요청", proofFileName.trim() || undefined);
+      setActionMessage(TEXT.refundDone);
+      await loadOrder();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "환불 요청에 실패했습니다.");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const requestExchange = async () => {
+    if (!order?.id || !canExchange) return;
+    if (!window.confirm("교환 요청을 접수할까요?")) return;
+
+    setActionLoading(true);
+    setActionError("");
+    setActionMessage("");
+    try {
+      await api.mypage.exchangeOrder(order.id, reason.trim() || "사용자 요청", proofFileName.trim() || undefined);
+      setActionMessage(TEXT.exchangeDone);
+      await loadOrder();
+    } catch (err) {
+      setActionError(err instanceof Error ? err.message : "교환 요청에 실패했습니다.");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -97,7 +199,7 @@ export default function OrderDetail() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{TEXT.status}</p>
-                <p className="mt-1 text-sm font-semibold">{order.status || "-"}</p>
+                <p className="mt-1 text-sm font-semibold">{statusLabel(order.status)}</p>
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">{TEXT.amount}</p>
@@ -141,6 +243,63 @@ export default function OrderDetail() {
                 ))}
               </div>
             )}
+          </section>
+
+          <section className="rounded-2xl border border-border bg-card p-4">
+            <h2 className="mb-3 text-lg font-bold">{TEXT.actionHeader}</h2>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <label className="text-sm">
+                <span className="mb-1 block text-xs text-muted-foreground">{TEXT.reasonLabel}</span>
+                <input
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder={TEXT.reasonPlaceholder}
+                />
+              </label>
+              <label className="text-sm">
+                <span className="mb-1 block text-xs text-muted-foreground">{TEXT.proofLabel}</span>
+                <input
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                  value={proofFileName}
+                  onChange={(e) => setProofFileName(e.target.value)}
+                  placeholder={TEXT.proofPlaceholder}
+                />
+              </label>
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={requestCancel}
+                disabled={!canCancel || actionLoading}
+                className="rounded-lg border border-red-200 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading ? TEXT.actionProcessing : TEXT.cancelButton}
+              </button>
+              <button
+                type="button"
+                onClick={requestRefund}
+                disabled={!canRefund || actionLoading}
+                className="rounded-lg border border-amber-200 px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading ? TEXT.actionProcessing : TEXT.refundButton}
+              </button>
+              <button
+                type="button"
+                onClick={requestExchange}
+                disabled={!canExchange || actionLoading}
+                className="rounded-lg border border-blue-200 px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {actionLoading ? TEXT.actionProcessing : TEXT.exchangeButton}
+              </button>
+            </div>
+
+            {!canCancel && !canRefund && !canExchange && (
+              <p className="mt-2 text-xs text-muted-foreground">{TEXT.actionBlocked}</p>
+            )}
+            {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
+            {actionMessage && <p className="mt-2 text-xs text-emerald-700">{actionMessage}</p>}
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-4">

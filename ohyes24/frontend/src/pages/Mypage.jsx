@@ -87,6 +87,19 @@ const TEXT = {
   availableCoupons: "\uC0AC\uC6A9 \uAC00\uB2A5 \uCFE0\uD3F0",
   noCoupons: "\uC0AC\uC6A9 \uAC00\uB2A5\uD55C \uCFE0\uD3F0\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
   remainingCount: "\uB0A8\uC740 \uC218\uB7C9",
+  pointHistoryTitle: "\uD3EC\uC778\uD2B8 \uD69F\uB4DD/\uC0AC\uC6A9 \uB0B4\uC5ED",
+  couponHistoryTitle: "\uCFE0\uD3F0 \uD69F\uB4DD/\uC0AC\uC6A9 \uB0B4\uC5ED",
+  emptyPointHistory: "\uD3EC\uC778\uD2B8 \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  emptyCouponHistory: "\uCFE0\uD3F0 \uB0B4\uC5ED\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.",
+  historyType: "\uAD6C\uBD84",
+  historyAmount: "\uAE08\uC561/\uD61C\uD0DD",
+  historyDesc: "\uB0B4\uC6A9",
+  historyDate: "\uC77C\uC2DC",
+  pointEarn: "\uD3EC\uC778\uD2B8 \uD69F\uB4DD",
+  pointUse: "\uD3EC\uC778\uD2B8 \uC0AC\uC6A9",
+  couponAcquire: "\uCFE0\uD3F0 \uD68D\uB4DD",
+  couponUse: "\uCFE0\uD3F0 \uC0AC\uC6A9",
+  couponOrderNumber: "\uC8FC\uBB38\uBC88\uD638",
   goBooks: "\uB3C4\uC11C \uBCF4\uB7EC\uAC00\uAE30",
   recentCount: "\uCD5C\uADFC \uC870\uD68C",
   wishlistCount: "\uCC1C \uC218",
@@ -115,6 +128,12 @@ const formatDate = (value) => {
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return String(value).slice(0, 10);
   return d.toLocaleDateString("ko-KR");
+};
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("ko-KR");
 };
 
 const formatMoney = (value) => Number(value || 0).toLocaleString("ko-KR");
@@ -165,6 +184,7 @@ export default function Mypage() {
   const [wishlist, setWishlist] = useState([]);
   const [wallet, setWallet] = useState(null);
   const [favoritePosts, setFavoritePosts] = useState([]);
+  const [includePrivateFavorite, setIncludePrivateFavorite] = useState(false);
   const [myReviews, setMyReviews] = useState([]);
   const [reviewDrafts, setReviewDrafts] = useState({});
   const [reviewActionError, setReviewActionError] = useState("");
@@ -206,7 +226,7 @@ export default function Mypage() {
       api.mypage.wishlist(),
       api.mypage.wallet(),
       api.mypage.myReviews(),
-      api.mypage.favoritePosts(false),
+      api.mypage.favoritePosts(includePrivateFavorite),
     ]);
 
     setSummaryFromServer(sm.status === "fulfilled" ? sm.value || null : null);
@@ -305,6 +325,10 @@ export default function Mypage() {
       active = false;
     };
   }, [user?.id, viewingUserId]);
+  useEffect(() => {
+    if (!user?.id) return;
+    loadExtras();
+  }, [includePrivateFavorite]);
 
   const save = async () => {
     if (!profile?.id) return;
@@ -461,6 +485,34 @@ export default function Mypage() {
     }),
     [summaryFromServer, recentViews, orders, wishlist, wallet],
   );
+  const pointHistories = useMemo(() => wallet?.pointHistories || [], [wallet]);
+  const couponHistories = useMemo(() => {
+    const acquired = (wallet?.coupons || []).map((coupon) => ({
+      key: `acquire-${coupon.code}`,
+      actionType: "ACQUIRE",
+      couponCode: coupon.code,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      remainingCount: coupon.remainingCount,
+      createdAt: coupon.createdAt || coupon.validFrom || null,
+      orderNumber: null,
+    }));
+    const used = (wallet?.couponHistories || []).map((row) => ({
+      key: `use-${row.id || row.couponCode}-${row.usedAt}`,
+      actionType: "USE",
+      couponCode: row.couponCode,
+      discountType: null,
+      discountValue: null,
+      remainingCount: null,
+      createdAt: row.usedAt,
+      orderNumber: row.orderNumber || null,
+    }));
+    return [...used, ...acquired].sort((a, b) => {
+      const aTs = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bTs = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return bTs - aTs;
+    });
+  }, [wallet]);
 
   if (profileLoading) {
     return (
@@ -907,17 +959,99 @@ export default function Mypage() {
                   </div>
                 )}
               </div>
+
+              <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                <div className="rounded-xl border border-border bg-background/70 p-3">
+                  <p className="mb-2 text-sm font-semibold">{TEXT.pointHistoryTitle}</p>
+                  {pointHistories.length === 0 ? (
+                    <p className="rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">{TEXT.emptyPointHistory}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {pointHistories.slice(0, 20).map((history, idx) => {
+                        const earned = Number(history.amount || 0) >= 0;
+                        return (
+                          <div key={`${history.createdAt}-${idx}`} className="rounded-lg border border-border px-3 py-2">
+                            <p className="text-xs font-semibold">
+                              {TEXT.historyType}: {earned ? TEXT.pointEarn : TEXT.pointUse}
+                            </p>
+                            <p className={`mt-1 text-xs font-semibold ${earned ? "text-emerald-700" : "text-red-600"}`}>
+                              {TEXT.historyAmount}: {Number(history.amount || 0) > 0 ? "+" : ""}
+                              {Number(history.amount || 0).toLocaleString()}P
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground">{TEXT.historyDesc}: {history.description || "-"}</p>
+                            <p className="mt-1 text-xs text-muted-foreground">{TEXT.historyDate}: {formatDateTime(history.createdAt)}</p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                <div className="rounded-xl border border-border bg-background/70 p-3">
+                  <p className="mb-2 text-sm font-semibold">{TEXT.couponHistoryTitle}</p>
+                  {couponHistories.length === 0 ? (
+                    <p className="rounded-lg bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">{TEXT.emptyCouponHistory}</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {couponHistories.slice(0, 20).map((history) => (
+                        <div key={history.key} className="rounded-lg border border-border px-3 py-2">
+                          <p className="text-xs font-semibold">
+                            {TEXT.historyType}: {history.actionType === "USE" ? TEXT.couponUse : TEXT.couponAcquire}
+                          </p>
+                          <p className="mt-1 text-xs font-semibold">
+                            {history.couponCode || "-"}
+                            {history.discountValue != null && history.discountType ? (
+                              <>
+                                {" "}
+                                (
+                                {String(history.discountType).toUpperCase() === "PERCENT"
+                                  ? `${history.discountValue}%`
+                                  : `${formatMoney(history.discountValue)} KRW`}
+                                )
+                              </>
+                            ) : null}
+                          </p>
+                          {history.orderNumber && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {TEXT.couponOrderNumber}: {history.orderNumber}
+                            </p>
+                          )}
+                          {history.remainingCount != null && (
+                            <p className="mt-1 text-xs text-muted-foreground">
+                              {TEXT.remainingCount}: {history.remainingCount}
+                            </p>
+                          )}
+                          <p className="mt-1 text-xs text-muted-foreground">{TEXT.historyDate}: {formatDateTime(history.createdAt)}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
             </section>
 
             <section ref={favoriteRef} className="rounded-2xl border border-border bg-card p-5">
-              <h2 className="mb-4 text-lg font-bold">{TEXT.favoritePosts}</h2>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold">{TEXT.favoritePosts}</h2>
+                <label className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={includePrivateFavorite}
+                    onChange={(e) => setIncludePrivateFavorite(e.target.checked)}
+                  />
+                  비공개 포함
+                </label>
+              </div>
               {favoritePosts.length === 0 ? (
                 <p className="rounded-xl bg-secondary/40 px-4 py-3 text-sm text-muted-foreground">{TEXT.emptyFavorite}</p>
               ) : (
                 <div className="space-y-2">
                   {favoritePosts.slice(0, 20).map((p) => (
                     <div key={p.id} className="flex items-center justify-between rounded-xl border border-border bg-background/80 px-3 py-2">
-                      <p className="mr-3 text-sm font-medium">{p.postTitle}</p>
+                      <div className="mr-3">
+                        <p className="text-sm font-medium">{p.postTitle}</p>
+                        <p className="text-xs text-muted-foreground">{formatDate(p.createdAt)}</p>
+                      </div>
                       <button className="text-xs font-semibold text-red-500 hover:text-red-600" onClick={() => removeFavoritePost(p.id)}>
                         {TEXT.remove}
                       </button>

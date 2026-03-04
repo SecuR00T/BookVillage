@@ -15,10 +15,8 @@ import androidx.appcompat.app.AppCompatActivity
  */
 class MainActivity : AppCompatActivity() {
 
-    // 개발: "http://10.0.2.2:3000" (에뮬레이터 -> localhost)
-    // 개발: "http://YOUR_PC_IP:3000" (실기기)
-    // 배포: "https://your-domain.com"
-    private val webAppUrl = "http://10.0.2.2:3000"
+    // URL은 gradle.properties의 webAppUrl 또는 -PwebAppUrl로 주입됨.
+    private val webAppUrl = BuildConfig.WEB_APP_URL
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {

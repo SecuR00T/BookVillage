@@ -5,12 +5,17 @@ plugins {
 android {
     namespace = "com.yes24.mock"
     compileSdk = 34
+    buildFeatures {
+        buildConfig = true
+    }
     defaultConfig {
         applicationId = "com.yes24.mock"
         minSdk = 24
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+        val webAppUrl = (project.findProperty("webAppUrl") as String?) ?: "http://10.0.2.2:8081"
+        buildConfigField("String", "WEB_APP_URL", "\"$webAppUrl\"")
     }
     buildTypes {
         release {

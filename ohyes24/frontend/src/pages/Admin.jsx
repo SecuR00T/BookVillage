@@ -1,27 +1,77 @@
-ï»¿import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
 
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleString("ko-KR");
+};
+
 export default function Admin() {
   const { isAdmin } = useAuth();
+
   const [dashboard, setDashboard] = useState(null);
   const [books, setBooks] = useState([]);
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
+  const [inquiries, setInquiries] = useState([]);
+
   const [noticeForm, setNoticeForm] = useState({ title: "", content: "" });
+  const [userControls, setUserControls] = useState({});
+  const [replyDrafts, setReplyDrafts] = useState({});
+
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [message, setMessage] = useState("");
 
   const load = async () => {
-    const [d, b, o, u] = await Promise.all([
-      api.admin.dashboard(),
-      api.admin.getBooks(),
-      api.admin.getOrders(),
-      api.admin.getUsers(),
-    ]);
-    setDashboard(d);
-    setBooks(b || []);
-    setOrders(o || []);
-    setUsers(u || []);
+    setLoading(true);
+    setError("");
+    try {
+      const [d, b, o, u, c] = await Promise.all([
+        api.admin.dashboard(),
+        api.admin.getBooks(),
+        api.admin.getOrders(),
+        api.admin.getUsers(),
+        api.admin.getCustomerService(),
+      ]);
+
+      const userRows = u || [];
+      const inquiryRows = c || [];
+
+      setDashboard(d || null);
+      setBooks(b || []);
+      setOrders(o || []);
+      setUsers(userRows);
+      setInquiries(inquiryRows);
+
+      setUserControls((prev) => {
+        const next = {};
+        userRows.forEach((row) => {
+          const existing = prev[row.id] || {};
+          next[row.id] = {
+            status: existing.status || row.status || "ACTIVE",
+            role: existing.role || row.role || "USER",
+          };
+        });
+        return next;
+      });
+
+      setReplyDrafts((prev) => {
+        const next = {};
+        inquiryRows.forEach((row) => {
+          next[row.id] = prev[row.id] ?? row.adminAnswer ?? "";
+        });
+        return next;
+      });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "°ü¸®ÀÚ µ¥ÀÌÅÍ¸¦ ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -31,88 +81,223 @@ export default function Admin() {
 
   if (!isAdmin) {
     return (
-      <PageLayout title="Admin" description="Admin privileges required.">
-        <p className="text-muted-foreground">ê´€ë¦¬ì ê¶Œí•œì´ í•„ìš”í•©ë‹ˆë‹¤.</p>
+      <PageLayout title="°ü¸®ÀÚ" description="°ü¸®ÀÚ Àü¿ë ±â´ÉÀÔ´Ï´Ù.">
+        <p className="text-muted-foreground">°ü¸®ÀÚ ±ÇÇÑÀÌ ÇÊ¿äÇÕ´Ï´Ù.</p>
       </PageLayout>
     );
   }
 
+  const openInquiryCount = useMemo(
+    () => inquiries.filter((v) => String(v.status || "").toUpperCase() === "OPEN").length,
+    [inquiries],
+  );
+
   const changeOrderStatus = async (orderId, status) => {
-    await api.admin.updateOrderStatus(orderId, status);
-    load();
+    setError("");
+    setMessage("");
+    try {
+      await api.admin.updateOrderStatus(orderId, status);
+      setMessage("ÁÖ¹® »óÅÂ¸¦ º¯°æÇß½À´Ï´Ù.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "ÁÖ¹® »óÅÂ º¯°æ¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+    }
   };
 
-  const changeUserStatus = async (userId, status) => {
-    await api.admin.updateUserStatus(userId, status);
-    load();
+  const changeUserControl = (userId, key, value) => {
+    setUserControls((prev) => ({
+      ...prev,
+      [userId]: {
+        status: prev[userId]?.status || "ACTIVE",
+        role: prev[userId]?.role || "USER",
+        [key]: value,
+      },
+    }));
+  };
+
+  const applyUserControl = async (userId) => {
+    const control = userControls[userId] || {};
+    setError("");
+    setMessage("");
+    try {
+      await api.admin.updateUserStatus(userId, control.status, control.role);
+      setMessage("È¸¿ø »óÅÂ/±ÇÇÑÀ» º¯°æÇß½À´Ï´Ù.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "È¸¿ø »óÅÂ/±ÇÇÑ º¯°æ¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+    }
   };
 
   const postNotice = async () => {
-    if (!noticeForm.title || !noticeForm.content) return;
-    await api.admin.createNotice(noticeForm.title, noticeForm.content);
-    setNoticeForm({ title: "", content: "" });
+    if (!noticeForm.title.trim() || !noticeForm.content.trim()) return;
+    setError("");
+    setMessage("");
+    try {
+      await api.admin.createNotice(noticeForm.title.trim(), noticeForm.content.trim());
+      setNoticeForm({ title: "", content: "" });
+      setMessage("°øÁö»çÇ×ÀÌ µî·ÏµÇ¾ú½À´Ï´Ù.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "°øÁö µî·Ï¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+    }
+  };
+
+  const replyInquiry = async (inquiryId) => {
+    const answer = String(replyDrafts[inquiryId] || "").trim();
+    if (!answer) {
+      setError("´äº¯ ³»¿ëÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
+      return;
+    }
+
+    setError("");
+    setMessage("");
+    try {
+      await api.admin.replyCustomerService(inquiryId, answer);
+      setMessage("¹®ÀÇ ´äº¯ÀÌ ÀúÀåµÇ¾ú½À´Ï´Ù.");
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "¹®ÀÇ ´äº¯ ÀúÀå¿¡ ½ÇÆĞÇß½À´Ï´Ù.");
+    }
   };
 
   return (
-    <PageLayout title="Admin" description="Dashboard and secure learning operations.">
+    <PageLayout title="°ü¸®ÀÚ" description="È¸¿ø/ÁÖ¹®/¹®ÀÇ/°øÁö ¿î¿µ ±â´É">
       {dashboard && (
-        <section className="bg-card border rounded-xl p-4 mb-4 grid md:grid-cols-5 gap-2 text-sm">
-          <div>Users: <strong>{dashboard.totalUsers}</strong></div>
-          <div>Books: <strong>{dashboard.totalBooks}</strong></div>
-          <div>Orders: <strong>{dashboard.totalOrders}</strong></div>
-          <div>Open Inquiries: <strong>{dashboard.openInquiries}</strong></div>
-          <div>Lab Events: <strong>{dashboard.securityEvents}</strong></div>
+        <section className="mb-4 grid gap-2 rounded-xl border bg-card p-4 text-sm md:grid-cols-5">
+          <div>È¸¿ø: <strong>{dashboard.totalUsers}</strong></div>
+          <div>µµ¼­: <strong>{dashboard.totalBooks}</strong></div>
+          <div>ÁÖ¹®: <strong>{dashboard.totalOrders}</strong></div>
+          <div>¹Ì´äº¯ ¹®ÀÇ: <strong>{openInquiryCount}</strong></div>
+          <div>º¸¾È ÀÌº¥Æ®: <strong>{dashboard.securityEvents}</strong></div>
         </section>
       )}
 
-      <div className="grid lg:grid-cols-2 gap-4">
-        <section className="bg-card border rounded-xl p-4">
-          <h2 className="font-bold mb-2">Orders</h2>
-          <div className="space-y-2 max-h-96 overflow-auto">
-            {orders.map((o) => (
-              <div key={o.id} className="border rounded p-2 text-sm">
-                <p className="font-semibold">{o.orderNumber}</p>
-                <p>Status: {o.status}</p>
-                <div className="flex gap-2 mt-1">
-                  <button className="px-2 py-1 text-xs rounded bg-secondary" onClick={() => changeOrderStatus(o.id, "PENDING")}>PENDING</button>
-                  <button className="px-2 py-1 text-xs rounded bg-secondary" onClick={() => changeOrderStatus(o.id, "SHIPPED")}>SHIPPED</button>
-                  <button className="px-2 py-1 text-xs rounded bg-secondary" onClick={() => changeOrderStatus(o.id, "DELIVERED")}>DELIVERED</button>
-                </div>
+      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">°ü¸®ÀÚ µ¥ÀÌÅÍ¸¦ ºÒ·¯¿À´Â ÁßÀÔ´Ï´Ù.</p>}
+      {error && <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
+      {message && <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}
+
+      {!loading && (
+        <>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <section className="rounded-xl border bg-card p-4">
+              <h2 className="mb-2 font-bold">ÁÖ¹® °ü¸®</h2>
+              <div className="max-h-96 space-y-2 overflow-auto">
+                {orders.map((o) => (
+                  <div key={o.id} className="rounded border p-2 text-sm">
+                    <p className="font-semibold">{o.orderNumber}</p>
+                    <p className="text-xs text-muted-foreground">»óÅÂ: {o.status} | ±İ¾×: {Number(o.totalAmount || 0).toLocaleString("ko-KR")} KRW</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "RETURN_REQUESTED", "EXCHANGE_REQUESTED"].map((status) => (
+                        <button
+                          key={status}
+                          className="rounded bg-secondary px-2 py-1 text-xs"
+                          onClick={() => changeOrderStatus(o.id, status)}
+                        >
+                          {status}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+                {orders.length === 0 && <p className="text-sm text-muted-foreground">ÁÖ¹® µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
               </div>
-            ))}
-          </div>
-        </section>
+            </section>
 
-        <section className="bg-card border rounded-xl p-4">
-          <h2 className="font-bold mb-2">Users</h2>
-          <div className="space-y-2 max-h-96 overflow-auto">
-            {users.map((u) => (
-              <div key={u.id} className="border rounded p-2 text-sm">
-                <p className="font-semibold">{u.email}</p>
-                <p>Role: {u.role} Â· Status: {u.status}</p>
-                <div className="flex gap-2 mt-1">
-                  <button className="px-2 py-1 text-xs rounded bg-secondary" onClick={() => changeUserStatus(u.id, "ACTIVE")}>ACTIVE</button>
-                  <button className="px-2 py-1 text-xs rounded bg-secondary" onClick={() => changeUserStatus(u.id, "SUSPENDED")}>SUSPENDED</button>
-                </div>
+            <section className="rounded-xl border bg-card p-4">
+              <h2 className="mb-2 font-bold">È¸¿ø »óÅÂ °ü¸®</h2>
+              <div className="max-h-96 space-y-2 overflow-auto">
+                {users.map((u) => {
+                  const control = userControls[u.id] || { status: u.status || "ACTIVE", role: u.role || "USER" };
+                  return (
+                    <div key={u.id} className="rounded border p-2 text-sm">
+                      <p className="font-semibold">#{u.id} {u.email}</p>
+                      <p className="text-xs text-muted-foreground">ÇöÀç »óÅÂ: {u.status} | ÇöÀç ±ÇÇÑ: {u.role}</p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                        <select
+                          className="rounded border border-input bg-background px-2 py-1.5 text-xs"
+                          value={control.status}
+                          onChange={(e) => changeUserControl(u.id, "status", e.target.value)}
+                        >
+                          <option value="ACTIVE">ACTIVE</option>
+                          <option value="SUSPENDED">SUSPENDED</option>
+                          <option value="INACTIVE">INACTIVE</option>
+                        </select>
+                        <select
+                          className="rounded border border-input bg-background px-2 py-1.5 text-xs"
+                          value={control.role}
+                          onChange={(e) => changeUserControl(u.id, "role", e.target.value)}
+                        >
+                          <option value="USER">USER</option>
+                          <option value="ADMIN">ADMIN</option>
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => applyUserControl(u.id)}
+                          className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                        >
+                          Àû¿ë
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+                {users.length === 0 && <p className="text-sm text-muted-foreground">È¸¿ø µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
               </div>
-            ))}
+            </section>
           </div>
-        </section>
-      </div>
 
-      <section className="bg-card border rounded-xl p-4 mt-4">
-        <h2 className="font-bold mb-2">Books</h2>
-        <p className="text-sm text-muted-foreground">Total {books.length} books</p>
-      </section>
+          <section className="mt-4 rounded-xl border bg-card p-4">
+            <h2 className="mb-2 font-bold">°í°´¼¾ÅÍ ¹®ÀÇ ´äº¯</h2>
+            <div className="max-h-[520px] space-y-3 overflow-auto">
+              {inquiries.map((q) => (
+                <div key={q.id} className="rounded-xl border p-3">
+                  <p className="text-sm font-semibold">#{q.id} {q.subject || "(Á¦¸ñ ¾øÀ½)"}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    »óÅÂ: {q.status} | È¸¿ø: {q.userId || "-"} | ÀÛ¼ºÀÏ: {formatDateTime(q.createdAt)}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm">{q.content || "¹®ÀÇ ³»¿ëÀÌ ¾ø½À´Ï´Ù."}</p>
+                  <textarea
+                    className="mt-2 h-24 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                    placeholder="¿î¿µÀÚ ´äº¯À» ÀÔ·ÂÇÏ¼¼¿ä"
+                    value={replyDrafts[q.id] || ""}
+                    onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [q.id]: e.target.value }))}
+                  />
+                  <div className="mt-2 flex items-center justify-between">
+                    <p className="text-xs text-muted-foreground">ÇöÀç ´äº¯: {q.adminAnswer ? "ÀÖÀ½" : "¾øÀ½"}</p>
+                    <button
+                      type="button"
+                      onClick={() => replyInquiry(q.id)}
+                      className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
+                    >
+                      ´äº¯ ÀúÀå
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {inquiries.length === 0 && <p className="text-sm text-muted-foreground">¹®ÀÇ µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
+            </div>
+          </section>
 
-      <section className="bg-card border rounded-xl p-4 mt-4">
-        <h2 className="font-bold mb-2">Post Notice</h2>
-        <div className="grid gap-2 md:grid-cols-2">
-          <input className="border rounded px-3 py-2" placeholder="Title" value={noticeForm.title} onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })} />
-          <input className="border rounded px-3 py-2" placeholder="Content" value={noticeForm.content} onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })} />
-        </div>
-        <button className="mt-2 px-3 py-2 rounded bg-primary text-white" onClick={postNotice}>Create Notice</button>
-      </section>
+          <section className="mt-4 rounded-xl border bg-card p-4">
+            <h2 className="mb-2 font-bold">°øÁö µî·Ï</h2>
+            <p className="mb-2 text-xs text-muted-foreground">ÇöÀç µµ¼­ ¼ö: {books.length}</p>
+            <div className="grid gap-2 md:grid-cols-2">
+              <input
+                className="rounded border px-3 py-2"
+                placeholder="Á¦¸ñ"
+                value={noticeForm.title}
+                onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
+              />
+              <input
+                className="rounded border px-3 py-2"
+                placeholder="³»¿ë"
+                value={noticeForm.content}
+                onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })}
+              />
+            </div>
+            <button className="mt-2 rounded bg-primary px-3 py-2 text-white" onClick={postNotice}>°øÁö µî·Ï</button>
+          </section>
+        </>
+      )}
     </PageLayout>
   );
 }

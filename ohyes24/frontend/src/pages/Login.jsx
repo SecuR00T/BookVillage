@@ -1,13 +1,13 @@
-import { useState } from "react";
+﻿import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { BookOpen, ShieldCheck, Truck } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
-  brand: "OHYES24",
+  brand: "BOOKCHON",
   title: "로그인",
-  subtitle: "OHYES24 계정으로 로그인하세요.",
+  subtitle: "BOOKCHON 계정으로 로그인하세요.",
   heroLine1: "반가워요. 로그인하고",
   heroLine2: "책 쇼핑을 이어가세요.",
   heroDesc: "회원 전용 장바구니, 주문내역, 마이페이지 기능을 이용할 수 있습니다.",

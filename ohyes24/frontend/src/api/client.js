@@ -1,5 +1,5 @@
-﻿const API_BASE = "/api";
-const notifyAuthChanged = () => window.dispatchEvent(new Event("ohyes24-auth-changed"));
+const API_BASE = "/api";
+const notifyAuthChanged = () => window.dispatchEvent(new Event("bookchon-auth-changed"));
 const decodeEscapedUnicode = (value) =>
   typeof value === "string"
     ? value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
@@ -18,7 +18,7 @@ const decodeEscapedUnicodeDeep = (value) => {
 };
 
 const getAuthHeader = () => {
-  const creds = sessionStorage.getItem("ohyes24_creds");
+  const creds = sessionStorage.getItem("bookchon_creds");
   return creds ? { Authorization: `Basic ${creds}` } : {};
 };
 
@@ -44,8 +44,8 @@ async function request(url, options = {}) {
   }
 
   if (res.status === 401) {
-    sessionStorage.removeItem("ohyes24_creds");
-    sessionStorage.removeItem("ohyes24_user");
+    sessionStorage.removeItem("bookchon_creds");
+    sessionStorage.removeItem("bookchon_user");
     notifyAuthChanged();
     throw new Error("Unauthorized");
   }
@@ -161,8 +161,8 @@ export const api = {
         },
       });
       if (res.status === 401) {
-        sessionStorage.removeItem("ohyes24_creds");
-        sessionStorage.removeItem("ohyes24_user");
+        sessionStorage.removeItem("bookchon_creds");
+        sessionStorage.removeItem("bookchon_user");
         notifyAuthChanged();
         throw new Error("Unauthorized");
       }
@@ -259,6 +259,7 @@ export const api = {
     create: (data) => request("/customer-service", { method: "POST", body: JSON.stringify(data) }),
   },
 };
+
 
 
 

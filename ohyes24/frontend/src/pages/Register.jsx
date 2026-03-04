@@ -5,7 +5,7 @@ import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
   title: "\ud68c\uc6d0\uac00\uc785",
-  consentHeading: "OHYES24 \uc774\uc6a9 \ub3d9\uc758",
+  consentHeading: "BOOKCHON \uc774\uc6a9 \ub3d9\uc758",
   agreeAll: "\uc57d\uad00 \uc804\uccb4 \ub3d9\uc758\ud558\uae30",
   over14: "\ub9cc 14\uc138 \uc774\uc0c1\uc785\ub2c8\ub2e4.",
   required: "(\ud544\uc218)",
@@ -20,7 +20,7 @@ const TEXT = {
   phone: "\uc804\ud654\ubc88\ud638",
   address: "\uc8fc\uc18c",
   submit: "\uac00\uc785\ud558\uae30",
-  alreadyMember: "\uc774\ubbf8 OHYES24 \ud68c\uc6d0\uc778\uac00\uc694?",
+  alreadyMember: "\uc774\ubbf8 BOOKCHON \ud68c\uc6d0\uc778\uac00\uc694?",
   login: "\ub85c\uadf8\uc778",
   errAgreeRequired: "\ud544\uc218 \uc57d\uad00\uc5d0 \ubaa8\ub450 \ub3d9\uc758\ud574 \uc8fc\uc138\uc694.",
   errNameRequired: "\uc774\ub984\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.",
@@ -237,3 +237,4 @@ export default function Register() {
     </PageLayout>
   );
 }
+

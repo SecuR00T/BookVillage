@@ -3,14 +3,15 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: yes24-frontend
+    container_name: bookchon-frontend
     restart: unless-stopped
     ports:
       - "${FRONTEND_PORT:-8081}:80"
     networks:
-      - yes24-net
+      - bookchon-net
 
 networks:
-  yes24-net:
+  bookchon-net:
     external: true
-    name: yes24-net
+    name: bookchon-net
+

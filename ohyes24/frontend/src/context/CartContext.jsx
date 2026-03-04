@@ -17,7 +17,7 @@ const normalizeItem = (item) => ({
   lineTotal: toSafeNumber(item?.lineTotal, 0),
 });
 
-const hasSignedInUser = () => Boolean(sessionStorage.getItem("ohyes24_user"));
+const hasSignedInUser = () => Boolean(sessionStorage.getItem("bookchon_user"));
 
 export function CartProvider({ children }) {
   const [items, setItems] = useState([]);
@@ -49,8 +49,8 @@ export function CartProvider({ children }) {
     const onAuthChanged = () => {
       syncFromServer();
     };
-    window.addEventListener("ohyes24-auth-changed", onAuthChanged);
-    return () => window.removeEventListener("ohyes24-auth-changed", onAuthChanged);
+    window.addEventListener("bookchon-auth-changed", onAuthChanged);
+    return () => window.removeEventListener("bookchon-auth-changed", onAuthChanged);
   }, [syncFromServer]);
 
   const addItem = (item, quantity = 1) => {
@@ -125,3 +125,4 @@ export function useCart() {
   if (!ctx) throw new Error("useCart must be used within CartProvider");
   return ctx;
 }
+

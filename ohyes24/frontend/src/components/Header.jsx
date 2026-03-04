@@ -93,7 +93,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex-shrink-0">
-            <img src="/ohyes24-logo.svg" alt="오예스24" className="h-8 sm:h-10 w-auto" />
+            <img src="/bookchon-logo.svg" alt="BOOKCHON" className="h-8 sm:h-10 w-auto" />
           </Link>
 
           <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-2xl">
@@ -203,22 +203,13 @@ const Header = () => {
                 </motion.button>
               ))}
               <hr className="border-border" />
-              <Link
-                to="/guest-orders"
-                className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground"
-              >
+              <Link to="/guest-orders" className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground">
                 비회원 주문조회
               </Link>
-              <Link
-                to={user ? "/mypage" : "/login"}
-                className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground"
-              >
+              <Link to={user ? "/mypage" : "/login"} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground">
                 마이페이지
               </Link>
-              <Link
-                to={user ? "/orders" : "/login"}
-                className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground"
-              >
+              <Link to={user ? "/orders" : "/login"} className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground">
                 내 주문
               </Link>
             </div>

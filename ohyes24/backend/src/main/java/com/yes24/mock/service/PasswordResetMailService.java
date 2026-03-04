@@ -16,7 +16,7 @@ public class PasswordResetMailService {
     private static final DateTimeFormatter EXPIRES_AT_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
     private final ObjectProvider<JavaMailSender> mailSenderProvider;
 
-    @Value("${app.mail.from:no-reply@ohyes24.local}")
+    @Value("${app.mail.from:no-reply@bookchon.local}")
     private String fromAddress;
 
     @Value("${spring.mail.username:}")
@@ -42,7 +42,7 @@ public class PasswordResetMailService {
         SimpleMailMessage message = new SimpleMailMessage();
         message.setTo(toEmail.trim());
         message.setFrom(resolveFromAddress());
-        message.setSubject("[OHYES24] Password reset code");
+        message.setSubject("[BOOKCHON] Password reset code");
         message.setText(buildBody(token, expiresAt));
 
         try {
@@ -55,11 +55,11 @@ public class PasswordResetMailService {
     private String buildBody(String token, LocalDateTime expiresAt) {
         String expires = expiresAt != null ? EXPIRES_AT_FORMAT.format(expiresAt) : "soon";
         return "Hello,\n\n"
-                + "Your OHYES24 password reset verification code is:\n\n"
+                + "Your BOOKCHON password reset verification code is:\n\n"
                 + token + "\n\n"
                 + "This code expires at " + expires + ".\n"
                 + "If you did not request this reset, you can ignore this email.\n\n"
-                + "OHYES24 Team";
+                + "BOOKCHON Team";
     }
 
     private String resolveFromAddress() {
@@ -72,3 +72,4 @@ public class PasswordResetMailService {
         throw new IllegalStateException("APP_MAIL_FROM or SPRING_MAIL_USERNAME must be configured.");
     }
 }
+

@@ -1,4 +1,4 @@
-import { Gift, Ticket, CalendarCheck2 } from "lucide-react";
+﻿import { Gift, Ticket, CalendarCheck2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 
@@ -15,7 +15,7 @@ const eventCards = [
   {
     id: "review-reward",
     title: "리뷰 작성 포인트 이벤트",
-    description: "도서 리뷰를 작성하면 포인트가 적립되며, 누적 포인트는 결제에 사용할 수 있습니다.",
+    description: "도서 리뷰를 작성하면 포인트가 적립되고 결제 시 사용할 수 있습니다.",
     badge: "상시",
     cta: "도서 보러가기",
     to: "/books",
@@ -23,7 +23,7 @@ const eventCards = [
   },
   {
     id: "notice",
-    title: "이벤트/공지 캘린더",
+    title: "이벤트 공지 캘린더",
     description: "최신 공지사항과 진행 중인 프로모션 일정을 한 번에 확인할 수 있습니다.",
     badge: "업데이트",
     cta: "공지사항 보기",
@@ -36,7 +36,7 @@ export default function Events() {
   return (
     <PageLayout title="이벤트" description="진행 중인 혜택과 프로모션을 확인해 보세요.">
       <section className="rounded-2xl border border-border bg-gradient-to-r from-primary/90 to-primary p-6 text-primary-foreground">
-        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary-foreground/80">OHYES24 EVENT</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-primary-foreground/80">BOOKCHON EVENT</p>
         <h2 className="mt-2 text-2xl font-extrabold">이번 달 추천 이벤트</h2>
         <p className="mt-2 text-sm text-primary-foreground/90">
           이벤트 탭은 학습용 Security Labs가 아닌, 실제 사용자용 프로모션 페이지로 연결됩니다.

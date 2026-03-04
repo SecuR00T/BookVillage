@@ -27,7 +27,7 @@ services:
     networks:
       - shared-net
 
-  yes24-backend:
+  bookchon-backend:
     build:
       context: ./ohyes24/backend
       dockerfile: Dockerfile
@@ -53,13 +53,13 @@ services:
     networks:
       - shared-net
 
-  yes24-frontend:
+  bookchon-frontend:
     build:
       context: ./ohyes24/frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
-      - yes24-backend
+      - bookchon-backend
     ports:
       - "${SHOP_FRONTEND_PORT:-8081}:80"
     networks:
@@ -106,3 +106,4 @@ volumes:
 networks:
   shared-net:
     name: shared-net
+

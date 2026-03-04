@@ -68,7 +68,7 @@ export default function Admin() {
         return next;
       });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "°ü¸®ÀÚ µ¥ÀÌÅÍ¸¦ ºÒ·¯¿ÀÁö ¸øÇß½À´Ï´Ù.");
+      setError(err instanceof Error ? err.message : "ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
     } finally {
       setLoading(false);
     }
@@ -81,8 +81,8 @@ export default function Admin() {
 
   if (!isAdmin) {
     return (
-      <PageLayout title="°ü¸®ÀÚ" description="°ü¸®ÀÚ Àü¿ë ±â´ÉÀÔ´Ï´Ù.">
-        <p className="text-muted-foreground">°ü¸®ÀÚ ±ÇÇÑÀÌ ÇÊ¿äÇÕ´Ï´Ù.</p>
+      <PageLayout title="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" description="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ô´Ï´ï¿½.">
+        <p className="text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê¿ï¿½ï¿½Õ´Ï´ï¿½.</p>
       </PageLayout>
     );
   }
@@ -97,10 +97,10 @@ export default function Admin() {
     setMessage("");
     try {
       await api.admin.updateOrderStatus(orderId, status);
-      setMessage("ÁÖ¹® »óÅÂ¸¦ º¯°æÇß½À´Ï´Ù.");
+      setMessage("ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½Â¸ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ÁÖ¹® »óÅÂ º¯°æ¿¡ ½ÇÆÐÇß½À´Ï´Ù.");
+      setError(err instanceof Error ? err.message : "ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½æ¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
     }
   };
 
@@ -121,10 +121,10 @@ export default function Admin() {
     setMessage("");
     try {
       await api.admin.updateUserStatus(userId, control.status, control.role);
-      setMessage("È¸¿ø »óÅÂ/±ÇÇÑÀ» º¯°æÇß½À´Ï´Ù.");
+      setMessage("È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "È¸¿ø »óÅÂ/±ÇÇÑ º¯°æ¿¡ ½ÇÆÐÇß½À´Ï´Ù.");
+      setError(err instanceof Error ? err.message : "È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½æ¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
     }
   };
 
@@ -135,16 +135,16 @@ export default function Admin() {
     try {
       await api.admin.createNotice(noticeForm.title.trim(), noticeForm.content.trim());
       setNoticeForm({ title: "", content: "" });
-      setMessage("°øÁö»çÇ×ÀÌ µî·ÏµÇ¾ú½À´Ï´Ù.");
+      setMessage("ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ÏµÇ¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "°øÁö µî·Ï¿¡ ½ÇÆÐÇß½À´Ï´Ù.");
+      setError(err instanceof Error ? err.message : "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
     }
   };
 
   const replyInquiry = async (inquiryId) => {
     const answer = String(replyDrafts[inquiryId] || "").trim();
     if (!answer) {
-      setError("´äº¯ ³»¿ëÀ» ÀÔ·ÂÇØ ÁÖ¼¼¿ä.");
+      setError("ï¿½äº¯ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½ï¿½ ï¿½Ö¼ï¿½ï¿½ï¿½.");
       return;
     }
 
@@ -152,26 +152,26 @@ export default function Admin() {
     setMessage("");
     try {
       await api.admin.replyCustomerService(inquiryId, answer);
-      setMessage("¹®ÀÇ ´äº¯ÀÌ ÀúÀåµÇ¾ú½À´Ï´Ù.");
+      setMessage("ï¿½ï¿½ï¿½ï¿½ ï¿½äº¯ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ç¾ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "¹®ÀÇ ´äº¯ ÀúÀå¿¡ ½ÇÆÐÇß½À´Ï´Ù.");
+      setError(err instanceof Error ? err.message : "ï¿½ï¿½ï¿½ï¿½ ï¿½äº¯ ï¿½ï¿½ï¿½å¿¡ ï¿½ï¿½ï¿½ï¿½ï¿½ß½ï¿½ï¿½Ï´ï¿½.");
     }
   };
 
   return (
-    <PageLayout title="°ü¸®ÀÚ" description="È¸¿ø/ÁÖ¹®/¹®ÀÇ/°øÁö ¿î¿µ ±â´É">
+    <PageLayout title="ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½" description="È¸ï¿½ï¿½/ï¿½Ö¹ï¿½/ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ ï¿½î¿µ ï¿½ï¿½ï¿½">
       {dashboard && (
         <section className="mb-4 grid gap-2 rounded-xl border bg-card p-4 text-sm md:grid-cols-5">
-          <div>È¸¿ø: <strong>{dashboard.totalUsers}</strong></div>
-          <div>µµ¼­: <strong>{dashboard.totalBooks}</strong></div>
-          <div>ÁÖ¹®: <strong>{dashboard.totalOrders}</strong></div>
-          <div>¹Ì´äº¯ ¹®ÀÇ: <strong>{openInquiryCount}</strong></div>
-          <div>º¸¾È ÀÌº¥Æ®: <strong>{dashboard.securityEvents}</strong></div>
+          <div>È¸ï¿½ï¿½: <strong>{dashboard.totalUsers}</strong></div>
+          <div>ï¿½ï¿½ï¿½ï¿½: <strong>{dashboard.totalBooks}</strong></div>
+          <div>ï¿½Ö¹ï¿½: <strong>{dashboard.totalOrders}</strong></div>
+          <div>ï¿½Ì´äº¯ ï¿½ï¿½ï¿½ï¿½: <strong>{openInquiryCount}</strong></div>
+          <div>ï¿½ï¿½ï¿½ï¿½ ï¿½Ìºï¿½Æ®: <strong>{dashboard.securityEvents}</strong></div>
         </section>
       )}
 
-      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">°ü¸®ÀÚ µ¥ÀÌÅÍ¸¦ ºÒ·¯¿À´Â ÁßÀÔ´Ï´Ù.</p>}
+      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ò·ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½Ô´Ï´ï¿½.</p>}
       {error && <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       {message && <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}
 
@@ -179,12 +179,12 @@ export default function Admin() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 font-bold">ÁÖ¹® °ü¸®</h2>
+              <h2 className="mb-2 font-bold">ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½</h2>
               <div className="max-h-96 space-y-2 overflow-auto">
                 {orders.map((o) => (
                   <div key={o.id} className="rounded border p-2 text-sm">
                     <p className="font-semibold">{o.orderNumber}</p>
-                    <p className="text-xs text-muted-foreground">»óÅÂ: {o.status} | ±Ý¾×: {Number(o.totalAmount || 0).toLocaleString("ko-KR")} KRW</p>
+                    <p className="text-xs text-muted-foreground">ï¿½ï¿½ï¿½ï¿½: {o.status} | ï¿½Ý¾ï¿½: {Number(o.totalAmount || 0).toLocaleString("ko-KR")} KRW</p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "RETURN_REQUESTED", "EXCHANGE_REQUESTED"].map((status) => (
                         <button
@@ -198,19 +198,19 @@ export default function Admin() {
                     </div>
                   </div>
                 ))}
-                {orders.length === 0 && <p className="text-sm text-muted-foreground">ÁÖ¹® µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
+                {orders.length === 0 && <p className="text-sm text-muted-foreground">ï¿½Ö¹ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.</p>}
               </div>
             </section>
 
             <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 font-bold">È¸¿ø »óÅÂ °ü¸®</h2>
+              <h2 className="mb-2 font-bold">È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½</h2>
               <div className="max-h-96 space-y-2 overflow-auto">
                 {users.map((u) => {
                   const control = userControls[u.id] || { status: u.status || "ACTIVE", role: u.role || "USER" };
                   return (
                     <div key={u.id} className="rounded border p-2 text-sm">
                       <p className="font-semibold">#{u.id} {u.email}</p>
-                      <p className="text-xs text-muted-foreground">ÇöÀç »óÅÂ: {u.status} | ÇöÀç ±ÇÇÑ: {u.role}</p>
+                      <p className="text-xs text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {u.status} | ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½: {u.role}</p>
                       <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
                         <select
                           className="rounded border border-input bg-background px-2 py-1.5 text-xs"
@@ -234,67 +234,67 @@ export default function Admin() {
                           onClick={() => applyUserControl(u.id)}
                           className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                         >
-                          Àû¿ë
+                          ï¿½ï¿½ï¿½ï¿½
                         </button>
                       </div>
                     </div>
                   );
                 })}
-                {users.length === 0 && <p className="text-sm text-muted-foreground">È¸¿ø µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
+                {users.length === 0 && <p className="text-sm text-muted-foreground">È¸ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.</p>}
               </div>
             </section>
           </div>
 
           <section className="mt-4 rounded-xl border bg-card p-4">
-            <h2 className="mb-2 font-bold">°í°´¼¾ÅÍ ¹®ÀÇ ´äº¯</h2>
+            <h2 className="mb-2 font-bold">ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½äº¯</h2>
             <div className="max-h-[520px] space-y-3 overflow-auto">
               {inquiries.map((q) => (
                 <div key={q.id} className="rounded-xl border p-3">
-                  <p className="text-sm font-semibold">#{q.id} {q.subject || "(Á¦¸ñ ¾øÀ½)"}</p>
+                  <p className="text-sm font-semibold">#{q.id} {q.subject || "(ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½)"}</p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    »óÅÂ: {q.status} | È¸¿ø: {q.userId || "-"} | ÀÛ¼ºÀÏ: {formatDateTime(q.createdAt)}
+                    ï¿½ï¿½ï¿½ï¿½: {q.status} | È¸ï¿½ï¿½: {q.userId || "-"} | ï¿½Û¼ï¿½ï¿½ï¿½: {formatDateTime(q.createdAt)}
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm">{q.content || "¹®ÀÇ ³»¿ëÀÌ ¾ø½À´Ï´Ù."}</p>
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm">{q.content || "ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½."}</p>
                   <textarea
                     className="mt-2 h-24 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="¿î¿µÀÚ ´äº¯À» ÀÔ·ÂÇÏ¼¼¿ä"
+                    placeholder="ï¿½î¿µï¿½ï¿½ ï¿½äº¯ï¿½ï¿½ ï¿½Ô·ï¿½ï¿½Ï¼ï¿½ï¿½ï¿½"
                     value={replyDrafts[q.id] || ""}
                     onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   />
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">ÇöÀç ´äº¯: {q.adminAnswer ? "ÀÖÀ½" : "¾øÀ½"}</p>
+                    <p className="text-xs text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ ï¿½äº¯: {q.adminAnswer ? "ï¿½ï¿½ï¿½ï¿½" : "ï¿½ï¿½ï¿½ï¿½"}</p>
                     <button
                       type="button"
                       onClick={() => replyInquiry(q.id)}
                       className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                     >
-                      ´äº¯ ÀúÀå
+                      ï¿½äº¯ ï¿½ï¿½ï¿½ï¿½
                     </button>
                   </div>
                 </div>
               ))}
-              {inquiries.length === 0 && <p className="text-sm text-muted-foreground">¹®ÀÇ µ¥ÀÌÅÍ°¡ ¾ø½À´Ï´Ù.</p>}
+              {inquiries.length === 0 && <p className="text-sm text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í°ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Ï´ï¿½.</p>}
             </div>
           </section>
 
           <section className="mt-4 rounded-xl border bg-card p-4">
-            <h2 className="mb-2 font-bold">°øÁö µî·Ï</h2>
-            <p className="mb-2 text-xs text-muted-foreground">ÇöÀç µµ¼­ ¼ö: {books.length}</p>
+            <h2 className="mb-2 font-bold">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½</h2>
+            <p className="mb-2 text-xs text-muted-foreground">ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½: {books.length}</p>
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 className="rounded border px-3 py-2"
-                placeholder="Á¦¸ñ"
+                placeholder="ï¿½ï¿½ï¿½ï¿½"
                 value={noticeForm.title}
                 onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
               />
               <input
                 className="rounded border px-3 py-2"
-                placeholder="³»¿ë"
+                placeholder="ï¿½ï¿½ï¿½ï¿½"
                 value={noticeForm.content}
                 onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })}
               />
             </div>
-            <button className="mt-2 rounded bg-primary px-3 py-2 text-white" onClick={postNotice}>°øÁö µî·Ï</button>
+            <button className="mt-2 rounded bg-primary px-3 py-2 text-white" onClick={postNotice}>ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½</button>
           </section>
         </>
       )}

@@ -82,7 +82,7 @@ public class BookController {
         body.put("bookId", bookId);
         body.put("zipcode", zipcode);
         body.put("etaDays", etaDays);
-        body.put("carrier", "OHYES24 Logistics");
+        body.put("carrier", "BOOKCHON Logistics");
         body.put("orderCutoffTime", cutoff.format(DateTimeFormatter.ofPattern("HH:mm")));
         body.put("estimatedArrivalDate", arrivalDate.format(DateTimeFormatter.ISO_LOCAL_DATE));
         body.put("estimatedArrivalDateTime", arrivalDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
@@ -134,3 +134,4 @@ public class BookController {
         return ResponseEntity.ok(body);
     }
 }
+

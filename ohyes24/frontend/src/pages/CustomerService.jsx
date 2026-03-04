@@ -1,4 +1,4 @@
-﻿import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { Bell, HelpCircle, MessageSquareText, Paperclip, PlusCircle } from "lucide-react";
 import { api } from "@/api/client";

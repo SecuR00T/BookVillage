@@ -6,33 +6,33 @@
 
 @layer base {
   :root {
-    --background: 40 25% 97%;
-    --foreground: 220 25% 12%;
+    --background: 38 30% 96%;
+    --foreground: 22 32% 16%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 25% 12%;
+    --card-foreground: 22 32% 16%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 25% 12%;
+    --popover-foreground: 22 32% 16%;
 
-    --primary: 220 72% 28%;
+    --primary: 24 38% 27%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 20% 94%;
-    --secondary-foreground: 220 25% 12%;
+    --secondary: 38 26% 90%;
+    --secondary-foreground: 22 32% 16%;
 
-    --muted: 220 15% 92%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 38 20% 91%;
+    --muted-foreground: 28 16% 40%;
 
-    --accent: 2 78% 52%;
+    --accent: 152 28% 36%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 15% 90%;
-    --input: 220 15% 90%;
-    --ring: 220 72% 28%;
+    --border: 34 20% 84%;
+    --input: 34 20% 84%;
+    --ring: 24 38% 27%;
 
     --radius: 0.625rem;
 
@@ -46,20 +46,20 @@
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Custom tokens */
-    --success: 145 63% 42%;
+    --success: 152 38% 36%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 40 78% 44%;
     --warning-foreground: 0 0% 100%;
-    --price: 2 78% 52%;
-    --price-discount: 220 72% 28%;
-    --star: 45 93% 47%;
-    --badge-new: 145 63% 42%;
-    --badge-hot: 2 78% 52%;
-    --badge-sale: 38 92% 50%;
-    --header-bg: 220 72% 28%;
+    --price: 15 66% 44%;
+    --price-discount: 24 38% 27%;
+    --star: 43 78% 46%;
+    --badge-new: 152 38% 36%;
+    --badge-hot: 15 66% 44%;
+    --badge-sale: 40 78% 44%;
+    --header-bg: 24 38% 27%;
     --header-foreground: 0 0% 100%;
-    --hero-gradient-from: 220 72% 28%;
-    --hero-gradient-to: 220 60% 40%;
+    --hero-gradient-from: 24 38% 27%;
+    --hero-gradient-to: 152 28% 36%;
   }
 
   .dark {

@@ -11,7 +11,7 @@ const banners = [
     subtitle: "\uC62C\uD574 \uAC00\uC7A5 \uC0AC\uB791\uBC1B\uC740 \uCC45\uB4E4\uC744 \uB9CC\uB098\uBCF4\uC138\uC694",
     cta: "\uBCA0\uC2A4\uD2B8\uC140\uB7EC \uBCF4\uAE30",
     to: "/books?category=%EB%B2%A0%EC%8A%A4%ED%8A%B8%EC%85%80%EB%9F%AC",
-    gradient: "from-[hsl(220,72%,28%)] via-[hsl(220,68%,34%)] to-[hsl(220,60%,42%)]",
+    gradient: "from-[hsl(24,38%,27%)] via-[hsl(26,34%,32%)] to-[hsl(152,28%,36%)]",
     accent: "\uD83D\uDCDA",
   },
   {
@@ -21,7 +21,7 @@ const banners = [
     subtitle: "\uC774\uBC88 \uC8FC \uC5C5\uB370\uC774\uD2B8\uB41C \uC778\uAE30 \uC2E0\uAC04 \uBAA8\uC74C",
     cta: "\uC2E0\uAC04 \uBCF4\uB7EC\uAC00\uAE30",
     to: "/books",
-    gradient: "from-[hsl(8,78%,45%)] via-[hsl(18,80%,50%)] to-[hsl(35,84%,56%)]",
+    gradient: "from-[hsl(30,44%,30%)] via-[hsl(36,52%,38%)] to-[hsl(44,64%,52%)]",
     accent: "\u2728",
   },
   {
@@ -31,7 +31,7 @@ const banners = [
     subtitle: "\uCDE8\uC5C5\uACFC \uC2DC\uD5D8 \uB300\uBE44 \uB3C4\uC11C\uB97C \uD55C \uBC88\uC5D0",
     cta: "\uAE30\uD68D\uC804 \uBCF4\uAE30",
     to: "/books",
-    gradient: "from-[hsl(145,58%,30%)] via-[hsl(160,52%,36%)] to-[hsl(182,48%,40%)]",
+    gradient: "from-[hsl(152,34%,30%)] via-[hsl(160,30%,34%)] to-[hsl(170,28%,38%)]",
     accent: "\uD83C\uDFAF",
   },
 ];

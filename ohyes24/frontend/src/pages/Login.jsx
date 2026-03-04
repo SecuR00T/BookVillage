@@ -45,7 +45,7 @@ export default function Login() {
   return (
     <PageLayout hideIntro>
       <section className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[1.1fr_1fr]">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(220,72%,28%)] via-[hsl(220,68%,34%)] to-[hsl(220,60%,42%)] p-7 text-white">
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(24,38%,27%)] via-[hsl(28,34%,32%)] to-[hsl(152,28%,36%)] p-7 text-white">
           <div className="absolute -top-14 -right-12 h-44 w-44 rounded-full bg-white/10" />
           <div className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-white/10" />
           <div className="relative">

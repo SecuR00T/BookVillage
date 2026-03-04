@@ -4,6 +4,12 @@ import { api } from "@/api/client";
 const AuthContext = createContext(null);
 const notifyAuthChanged = () => window.dispatchEvent(new Event("bookchon-auth-changed"));
 
+const isUnauthorizedError = (err) => {
+  if (!err) return false;
+  if (typeof err?.status === "number" && err.status === 401) return true;
+  return err instanceof Error && /unauthorized/i.test(err.message);
+};
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(() => {
     const raw = sessionStorage.getItem("bookchon_user");
@@ -13,15 +19,17 @@ export function AuthProvider({ children }) {
   const login = async (email, password) => {
     const creds = btoa(unescape(encodeURIComponent(`${email}:${password}`)));
     sessionStorage.setItem("bookchon_creds", creds);
+
     let me;
     try {
       me = await api.auth.login({ email, password });
     } catch (err) {
-      if (err instanceof Error && err.message === "Unauthorized") {
-        throw new Error("?�메???�는 비�?번호�??�시 ?�인??주세??");
+      if (isUnauthorizedError(err)) {
+        throw new Error("이메일 또는 비밀번호를 다시 확인해 주세요.");
       }
       throw err;
     }
+
     sessionStorage.setItem("bookchon_user", JSON.stringify(me));
     setUser(me);
     notifyAuthChanged();
@@ -34,7 +42,7 @@ export function AuthProvider({ children }) {
 
   const deleteAccount = async (password) => {
     if (!user?.id) {
-      throw new Error("Not authenticated");
+      throw new Error("로그인이 필요합니다.");
     }
     await api.users.deleteMe(user.id, password);
     sessionStorage.removeItem("bookchon_creds");
@@ -71,4 +79,3 @@ export function useAuth() {
   if (!ctx) throw new Error("useAuth must be used within AuthProvider");
   return ctx;
 }
-

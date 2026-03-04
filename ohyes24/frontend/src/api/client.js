@@ -25,6 +25,66 @@ const getAuthHeader = () => {
 const TRANSIENT_STATUS = new Set([502, 503, 504]);
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+const STATUS_MESSAGE = {
+  400: "요청 형식이 올바르지 않습니다. 입력값을 확인해 주세요.",
+  401: "로그인이 만료되었습니다. 다시 로그인해 주세요.",
+  403: "접근 권한이 없습니다.",
+  404: "요청한 정보를 찾을 수 없습니다.",
+  409: "요청이 현재 상태와 충돌합니다. 새로고침 후 다시 시도해 주세요.",
+  422: "입력값을 다시 확인해 주세요.",
+  429: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+  500: "서버 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+  502: "서버 연결이 일시적으로 불안정합니다. 잠시 후 다시 시도해 주세요.",
+  503: "서버 연결이 일시적으로 불안정합니다. 잠시 후 다시 시도해 주세요.",
+  504: "서버 연결이 일시적으로 불안정합니다. 잠시 후 다시 시도해 주세요.",
+};
+
+export class ApiError extends Error {
+  constructor(message, { status = 0, details = null, retryable = false } = {}) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+    this.details = details;
+    this.retryable = retryable;
+  }
+}
+
+const parseErrorPayload = async (res) => {
+  const text = await res.text();
+  if (!text) return null;
+
+  try {
+    return decodeEscapedUnicodeDeep(JSON.parse(text));
+  } catch (_e) {
+    return { message: decodeEscapedUnicode(text) };
+  }
+};
+
+const extractMessageFromPayload = (payload) => {
+  if (!payload) return "";
+  if (typeof payload === "string") return decodeEscapedUnicode(payload).trim();
+  if (typeof payload?.message === "string") return decodeEscapedUnicode(payload.message).trim();
+  if (typeof payload?.error === "string") return decodeEscapedUnicode(payload.error).trim();
+  return "";
+};
+
+const statusMessage = (status) => STATUS_MESSAGE[status] || "요청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해 주세요.";
+
+const clearAuthSession = () => {
+  sessionStorage.removeItem("bookchon_creds");
+  sessionStorage.removeItem("bookchon_user");
+  notifyAuthChanged();
+};
+
+const parseSuccessPayload = (text) => {
+  if (!text) return null;
+  try {
+    return decodeEscapedUnicodeDeep(JSON.parse(text));
+  } catch (_e) {
+    return decodeEscapedUnicode(text);
+  }
+};
+
 async function request(url, options = {}) {
   const headers = {
     ...getAuthHeader(),
@@ -44,21 +104,23 @@ async function request(url, options = {}) {
   }
 
   if (res.status === 401) {
-    sessionStorage.removeItem("bookchon_creds");
-    sessionStorage.removeItem("bookchon_user");
-    notifyAuthChanged();
-    throw new Error("Unauthorized");
+    clearAuthSession();
+    throw new ApiError(statusMessage(401), { status: 401, retryable: false });
   }
+
   if (!res.ok) {
-    if (TRANSIENT_STATUS.has(res.status)) {
-      throw new Error("\uC11C\uBC84 \uC5F0\uACB0\uC774 \uC77C\uC2DC\uC801\uC73C\uB85C \uBD88\uC548\uC815\uD569\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574 \uC8FC\uC138\uC694.");
-    }
-    const err = await res.json().catch(() => ({ message: res.statusText }));
-    throw new Error(decodeEscapedUnicode(err.message || err.error || "Request failed"));
+    const payload = await parseErrorPayload(res);
+    const payloadMessage = extractMessageFromPayload(payload);
+    const message = payloadMessage || statusMessage(res.status);
+    throw new ApiError(message, {
+      status: res.status,
+      details: payload,
+      retryable: TRANSIENT_STATUS.has(res.status),
+    });
   }
+
   const text = await res.text();
-  if (!text) return null;
-  return decodeEscapedUnicodeDeep(JSON.parse(text));
+  return parseSuccessPayload(text);
 }
 
 export const api = {
@@ -161,13 +223,11 @@ export const api = {
         },
       });
       if (res.status === 401) {
-        sessionStorage.removeItem("bookchon_creds");
-        sessionStorage.removeItem("bookchon_user");
-        notifyAuthChanged();
-        throw new Error("Unauthorized");
+        clearAuthSession();
+        throw new ApiError(statusMessage(401), { status: 401 });
       }
       if (!res.ok) {
-        throw new Error("Attachment download failed");
+        throw new ApiError("첨부파일 다운로드에 실패했습니다.", { status: res.status });
       }
 
       const blob = await res.blob();

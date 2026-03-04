@@ -1,23 +1,24 @@
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
+import { useLocation } from "react-router-dom";
+import BrandedErrorPage from "@/components/BrandedErrorPage";
 
 const NotFound = () => {
   const location = useLocation();
 
   useEffect(() => {
-    console.error("404 Error: User attempted to access non-existent route:", location.pathname);
+    console.warn("404 route:", location.pathname);
   }, [location.pathname]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-muted">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">404</h1>
-        <p className="mb-4 text-xl text-muted-foreground">Oops! Page not found</p>
-        <a href="/" className="text-primary underline hover:text-primary/90">
-          Return to Home
-        </a>
-      </div>
-    </div>
+    <BrandedErrorPage
+      code="404"
+      title="페이지를 찾을 수 없습니다."
+      description="주소가 변경되었거나 삭제된 페이지입니다. 홈 또는 이전 페이지로 이동해 주세요."
+      detail={`요청 경로: ${location.pathname}`}
+      primaryActionLabel="이전 페이지"
+      onPrimaryAction={() => window.history.back()}
+      showBackButton={false}
+    />
   );
 };
 

@@ -92,8 +92,12 @@ const Header = () => {
 
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between gap-4">
-          <Link to="/" className="flex-shrink-0">
-            <img src="/bookchon-logo.svg" alt="BOOKCHON" className="h-8 sm:h-10 w-auto" />
+          <Link to="/" className="flex shrink-0 items-center gap-2.5">
+            <img src="/bookchon-logo.svg" alt="BOOKCHON" className="h-9 sm:h-11 w-auto" />
+            <div className="leading-tight">
+              <p className="text-xl sm:text-2xl font-extrabold tracking-[0.06em] text-[#3d2a1f]">BOOKCHON</p>
+              <p className="text-xs sm:text-sm font-semibold text-[#5a4638]">책 읽는 마을</p>
+            </div>
           </Link>
 
           <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-2xl">

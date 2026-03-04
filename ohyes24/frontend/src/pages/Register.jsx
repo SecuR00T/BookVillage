@@ -120,7 +120,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("over14")}
                   />
                   <span className="text-sm">
-                    {TEXT.over14} <span className="text-cyan-700 font-semibold">{TEXT.required}</span>
+                    {TEXT.over14} <span className="text-primary font-semibold">{TEXT.required}</span>
                   </span>
                 </span>
               </label>
@@ -134,7 +134,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("terms")}
                   />
                   <span className="text-sm">
-                    {TEXT.terms} <span className="text-cyan-700 font-semibold">{TEXT.required}</span>
+                    {TEXT.terms} <span className="text-primary font-semibold">{TEXT.required}</span>
                   </span>
                 </label>
                 <Link to="/terms/service" className="text-xs text-muted-foreground underline hover:text-primary">
@@ -151,7 +151,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("privacy")}
                   />
                   <span className="text-sm">
-                    {TEXT.privacy} <span className="text-cyan-700 font-semibold">{TEXT.required}</span>
+                    {TEXT.privacy} <span className="text-primary font-semibold">{TEXT.required}</span>
                   </span>
                 </label>
                 <Link to="/terms/privacy" className="text-xs text-muted-foreground underline hover:text-primary">
@@ -168,7 +168,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("collection")}
                   />
                   <span className="text-sm">
-                    {TEXT.collection} <span className="text-cyan-700 font-semibold">{TEXT.required}</span>
+                    {TEXT.collection} <span className="text-primary font-semibold">{TEXT.required}</span>
                   </span>
                 </span>
                 <span className="text-xs text-muted-foreground underline">{TEXT.detail}</span>
@@ -220,12 +220,12 @@ export default function Register() {
           </section>
 
           <div className="flex flex-wrap items-center gap-4">
-            <button className="rounded-md bg-cyan-400 px-8 py-3 font-semibold text-white transition-colors hover:bg-cyan-500">
+            <button className="rounded-md bg-primary px-8 py-3 font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
               {TEXT.submit}
             </button>
             <p className="text-base text-foreground">
               {TEXT.alreadyMember}{" "}
-              <Link to="/login" className="font-semibold text-primary underline underline-offset-2">
+              <Link to="/login" className="font-semibold text-primary underline underline-offset-2 hover:text-primary/80">
                 {TEXT.login}
               </Link>
             </p>

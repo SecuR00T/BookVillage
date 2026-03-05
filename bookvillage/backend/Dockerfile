@@ -2,10 +2,10 @@ FROM maven:3.9.11-eclipse-temurin-11 AS build
 WORKDIR /app
 
 COPY pom.xml ./
-RUN mvn -q -Dmaven.test.skip=true dependency:go-offline
+RUN mvn -q -DskipTests dependency:go-offline
 
 COPY src ./src
-RUN mvn -q -Dmaven.test.skip=true clean package
+RUN mvn -q -DskipTests clean package
 
 FROM eclipse-temurin:11-jre
 WORKDIR /app

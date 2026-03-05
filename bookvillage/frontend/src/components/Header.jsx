@@ -95,7 +95,7 @@ const Header = () => {
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between gap-4">
           <Link to="/" className="flex shrink-0 items-center">
-            <img src="/bookvillage-logo.svg?v=bukchon" alt="북촌" className="h-9 sm:h-11 w-auto" />
+            <img src="/bookvillage-logo.svg?v=bukchon-v150" alt="북촌" className="h-9 sm:h-11 w-auto" />
           </Link>
 
           <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-2xl">

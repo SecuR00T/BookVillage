@@ -77,6 +77,17 @@ public class MypageController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/orders/{orderId}/exchange")
+    public ResponseEntity<Void> exchangeOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestBody(required = false) Map<String, String> request) {
+        String reason = request != null ? request.get("reason") : null;
+        String proofFileName = request != null ? request.get("proofFileName") : null;
+        learningFeatureService.requestOrderExchange(principal.getUserId(), orderId, reason, proofFileName);
+        return ResponseEntity.noContent().build();
+    }
+
     @GetMapping("/favorite-posts")
     public ResponseEntity<List<Map<String, Object>>> favoritePosts(
             @AuthenticationPrincipal UserPrincipal principal,

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api } from "@/api/client";
 import PageLayout from "@/components/PageLayout";
@@ -30,7 +30,7 @@ const TEXT = {
   reasonPlaceholder: "요청 사유를 입력해 주세요.",
   proofLabel: "증빙 파일명(선택)",
   proofPlaceholder: "예: damaged_box.jpg",
-  actionProcessing: "처리 중...",
+  actionProcessing: "처리 중..",
   cancelDone: "취소 요청이 접수되었습니다.",
   refundDone: "환불(반품) 요청이 접수되었습니다.",
   exchangeDone: "교환 요청이 접수되었습니다.",
@@ -170,7 +170,7 @@ export default function OrderDetail() {
         </Link>
       </div>
 
-      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">불러오는 중...</p>}
+      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">불러오는 중..</p>}
       {!loading && error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       {!loading && !error && !order && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">{TEXT.notFound}</p>}
 
@@ -286,7 +286,6 @@ export default function OrderDetail() {
             {actionError && <p className="mt-2 text-xs text-red-600">{actionError}</p>}
             {actionMessage && <p className="mt-2 text-xs text-emerald-700">{actionMessage}</p>}
           </section>
-
         </div>
       )}
     </PageLayout>

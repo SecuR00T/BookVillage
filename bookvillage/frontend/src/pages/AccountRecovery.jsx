@@ -7,7 +7,7 @@ import { api } from "@/api/client";
 export default function AccountRecovery() {
   const [searchParams] = useSearchParams();
   const modeParam = searchParams.get("mode");
-  const activeMode = modeParam === "reset" ? "reset" : "id";
+  const activeMode = modeParam === "reset" ? "reset" : "email";
 
   const [findIdName, setFindIdName] = useState("");
   const [findIdEmail, setFindIdEmail] = useState("");
@@ -15,7 +15,6 @@ export default function AccountRecovery() {
   const [findIdError, setFindIdError] = useState("");
 
   const [resetEmail, setResetEmail] = useState("");
-  const [resetUserId, setResetUserId] = useState("");
   const [resetToken, setResetToken] = useState("");
   const [resetNewPassword, setResetNewPassword] = useState("");
   const [resetResult, setResetResult] = useState("");
@@ -27,11 +26,11 @@ export default function AccountRecovery() {
     setFindIdError("");
     setFindIdResult("");
     try {
-      const response = await api.auth.findId(findIdName, findIdEmail);
-      const foundId = response?.foundId || response?.maskedId || "N/A";
-      setFindIdResult(`조회된 아이디: ${foundId}`);
+      const response = await api.auth.findEmail(findIdName, findIdEmail);
+      const foundEmail = response?.foundEmail || response?.foundId || response?.maskedEmail || response?.maskedId || "N/A";
+      setFindIdResult(`조회된 이메일: ${foundEmail}`);
     } catch (err) {
-      setFindIdError(err instanceof Error ? err.message : "아이디 찾기에 실패했습니다.");
+      setFindIdError(err instanceof Error ? err.message : "이메일 찾기에 실패했습니다.");
     }
   };
 
@@ -53,7 +52,7 @@ export default function AccountRecovery() {
     setResetError("");
     setResetResult("");
     try {
-      await api.auth.confirmPasswordReset(resetEmail, resetToken, resetNewPassword, resetUserId);
+      await api.auth.confirmPasswordReset(resetEmail, resetToken, resetNewPassword);
       setResetResult("비밀번호가 변경되었습니다.");
     } catch (err) {
       setResetError(err instanceof Error ? err.message : "비밀번호 변경에 실패했습니다.");
@@ -71,11 +70,11 @@ export default function AccountRecovery() {
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h1 className="text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
-                {activeMode === "id" ? "아이디 찾기" : "비밀번호 재설정"}
+                {activeMode === "email" ? "이메일 찾기" : "비밀번호 재설정"}
               </h1>
               <p className="mt-1 text-sm text-slate-500">
-                {activeMode === "id"
-                  ? "가입 시 입력한 이름과 이메일로 아이디를 조회할 수 있습니다."
+                {activeMode === "email"
+                  ? "가입 시 입력한 이름과 이메일로 계정 이메일을 조회할 수 있습니다."
                   : "이메일 인증 후 새 비밀번호를 설정할 수 있습니다."}
               </p>
             </div>
@@ -84,15 +83,15 @@ export default function AccountRecovery() {
             </Link>
           </div>
 
-          {activeMode === "id" ? (
+          {activeMode === "email" ? (
             <section className="mt-6 rounded-2xl border border-slate-200 bg-slate-50/40 p-4">
               <div className="flex items-center gap-2.5">
                 <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                   <Search size={16} />
                 </div>
                 <div>
-                  <p className="text-sm font-bold text-slate-900">아이디 찾기</p>
-                  <p className="text-xs text-slate-500">이름과 이메일로 아이디를 조회합니다.</p>
+                  <p className="text-sm font-bold text-slate-900">이메일 찾기</p>
+                  <p className="text-xs text-slate-500">이름과 이메일로 계정 이메일을 조회합니다.</p>
                 </div>
               </div>
 
@@ -123,7 +122,7 @@ export default function AccountRecovery() {
                   />
                 </div>
                 <button className="inline-flex w-full items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90">
-                  아이디 찾기
+                  이메일 찾기
                   <ArrowRight size={15} />
                 </button>
               </form>
@@ -181,18 +180,6 @@ export default function AccountRecovery() {
                 <div className="mt-3 rounded-xl border border-dashed border-slate-200 bg-slate-50/80 p-3">
                   <p className="text-xs font-semibold text-slate-500">인증코드 확인 후 비밀번호 변경</p>
                   <form onSubmit={submitResetConfirm} className="mt-3 space-y-3">
-                    <div>
-                      <label htmlFor="reset-user-id" className={labelClass}>
-                        아이디
-                      </label>
-                      <input
-                        id="reset-user-id"
-                        className={inputClass}
-                        placeholder="아이디를 입력하세요"
-                        value={resetUserId}
-                        onChange={(e) => setResetUserId(e.target.value)}
-                      />
-                    </div>
                     <div>
                       <label htmlFor="reset-token" className={labelClass}>
                         인증코드

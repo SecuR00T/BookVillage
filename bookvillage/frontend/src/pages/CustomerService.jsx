@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Bell, HelpCircle, MessageSquareText, PlusCircle } from "lucide-react";
+import { Bell, FileText, HelpCircle, List, MessageSquareText, PlusCircle } from "lucide-react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
@@ -76,21 +76,19 @@ export default function CustomerService() {
     }
   };
 
-  const loadFaqs = async (category = "") => {
+  const loadFaqs = useCallback(async (category = "") => {
     const target = category || "";
     setFaqCategory(target);
     try {
       const rows = (await api.support.faqs(target || undefined)) || [];
       setFaqs(rows);
-      if (!faqCategories.length || !target) {
-        const allRows = target ? ((await api.support.faqs()) || []) : rows;
-        const categories = [...new Set(allRows.map((f) => f.category).filter(Boolean))];
-        setFaqCategories(categories);
-      }
+      const allRows = target ? ((await api.support.faqs()) || []) : rows;
+      const categories = [...new Set(allRows.map((f) => f.category).filter(Boolean))];
+      setFaqCategories(categories);
     } catch {
       setFaqs([]);
     }
-  };
+  }, []);
 
   useEffect(() => {
     api.support
@@ -113,7 +111,7 @@ export default function CustomerService() {
       });
 
     void loadFaqs("");
-  }, []);
+  }, [loadFaqs]);
 
   const submit = async (e) => {
     e.preventDefault();
@@ -290,21 +288,27 @@ export default function CustomerService() {
               </form>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="text-sm font-semibold">내 문의 목록</h3>
+                <div className="flex min-h-[118px] flex-col justify-between rounded-xl border border-border bg-background p-4">
+                  <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+                    <List size={14} />
+                    내 문의 목록
+                  </h3>
                   <Link
                     to="/customer-service/inquiries"
-                    className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
+                    className="mt-3 inline-flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold hover:bg-secondary"
                   >
                     목록으로 이동
                   </Link>
                 </div>
 
-                <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="text-sm font-semibold">문의 상세</h3>
+                <div className="flex min-h-[118px] flex-col justify-between rounded-xl border border-border bg-background p-4">
+                  <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+                    <FileText size={14} />
+                    문의 상세
+                  </h3>
                   <Link
                     to="/customer-service/inquiries"
-                    className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
+                    className="mt-3 inline-flex h-8 items-center rounded-lg border border-border px-3 text-xs font-semibold hover:bg-secondary"
                   >
                     상세 페이지 이동
                   </Link>

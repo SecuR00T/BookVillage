@@ -1,30 +1,46 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
-  title: "\ud68c\uc6d0\uac00\uc785",
-  consentHeading: "BOOKVILLAGE \uc774\uc6a9 \ub3d9\uc758",
-  agreeAll: "\uc57d\uad00 \uc804\uccb4 \ub3d9\uc758\ud558\uae30",
-  over14: "\ub9cc 14\uc138 \uc774\uc0c1\uc785\ub2c8\ub2e4.",
-  required: "(\ud544\uc218)",
-  terms: "\uc774\uc6a9\uc57d\uad00",
-  privacy: "\uac1c\uc778\uc815\ubcf4 \ucc98\ub9ac\ubc29\uce68",
-  collection: "\uac1c\uc778\uc815\ubcf4 \uc218\uc9d1\u00b7\uc774\uc6a9\u00b7\uc81c\uacf5 \ub3d9\uc758",
-  detail: "\uc790\uc138\ud788",
-  lastName: "\uc131",
-  firstName: "\uc774\ub984",
-  email: "\uc774\uba54\uc77c",
-  password: "\ube44\ubc00\ubc88\ud638",
-  phone: "\uc804\ud654\ubc88\ud638",
-  address: "\uc8fc\uc18c",
-  submit: "\uac00\uc785\ud558\uae30",
-  alreadyMember: "\uc774\ubbf8 BOOKVILLAGE \ud68c\uc6d0\uc778\uac00\uc694?",
-  login: "\ub85c\uadf8\uc778",
-  errAgreeRequired: "\ud544\uc218 \uc57d\uad00\uc5d0 \ubaa8\ub450 \ub3d9\uc758\ud574 \uc8fc\uc138\uc694.",
-  errNameRequired: "\uc774\ub984\uc744 \uc785\ub825\ud574 \uc8fc\uc138\uc694.",
-  errRegisterFailed: "\ud68c\uc6d0\uac00\uc785 \uc2e4\ud328",
+  title: "회원가입",
+  consentHeading: "BOOKVILLAGE 이용 동의",
+  agreeAll: "약관 전체 동의하기",
+  over14: "만 14세 이상입니다.",
+  required: "(필수)",
+  terms: "이용약관",
+  privacy: "개인정보 처리방침",
+  collection: "개인정보 수집·이용·제공 동의",
+  detail: "자세히",
+  lastName: "성",
+  firstName: "이름",
+  email: "이메일",
+  password: "비밀번호",
+  passwordConfirm: "비밀번호 확인",
+  phone: "전화번호",
+  address: "주소",
+  addressSearch: "주소 검색",
+  addressSearchPlaceholder: "도로명/동/건물명을 입력하세요",
+  addressDetail: "선택된 주소 (필요하면 상세 주소까지 입력)",
+  addressSearching: "검색 중...",
+  addressNoResult: "일치하는 주소가 없습니다.",
+  submit: "가입하기",
+  alreadyMember: "이미 BOOKVILLAGE 회원인가요?",
+  login: "로그인",
+  errAgreeRequired: "필수 약관에 모두 동의해 주세요.",
+  errNameRequired: "이름을 입력해 주세요.",
+  errPasswordConfirmRequired: "비밀번호 확인을 입력해 주세요.",
+  errPasswordMismatch: "비밀번호와 비밀번호 확인이 일치하지 않습니다.",
+  errAddressQueryRequired: "주소 검색어를 2자 이상 입력해 주세요.",
+  errAddressSearchFailed: "주소 검색에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+  errRegisterFailed: "회원가입 실패",
+};
+
+const formatAddressOption = (item) => {
+  const streetLine = [item?.street, item?.number].filter(Boolean).join(" ");
+  return item?.zipcode ? `(${item.zipcode}) ${streetLine}`.trim() : streetLine;
 };
 
 export default function Register() {
@@ -33,6 +49,7 @@ export default function Register() {
   const [form, setForm] = useState({
     email: "",
     password: "",
+    passwordConfirm: "",
     firstName: "",
     lastName: "",
     phone: "",
@@ -44,6 +61,10 @@ export default function Register() {
     privacy: false,
     collection: false,
   });
+  const [addressQuery, setAddressQuery] = useState("");
+  const [addressResults, setAddressResults] = useState([]);
+  const [addressSearchLoading, setAddressSearchLoading] = useState(false);
+  const [addressSearchError, setAddressSearchError] = useState("");
   const [error, setError] = useState("");
 
   const allRequiredAgreed = Object.values(agreements).every(Boolean);
@@ -62,6 +83,39 @@ export default function Register() {
     setAgreements((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const runAddressSearch = async () => {
+    const keyword = addressQuery.trim();
+    if (keyword.length < 2) {
+      setAddressSearchError(TEXT.errAddressQueryRequired);
+      setAddressResults([]);
+      return;
+    }
+
+    setAddressSearchLoading(true);
+    setAddressSearchError("");
+    setAddressResults([]);
+    try {
+      const rows = await api.auth.searchAddress(keyword);
+      const normalized = Array.isArray(rows) ? rows : [];
+      setAddressResults(normalized);
+      if (!normalized.length) {
+        setAddressSearchError(TEXT.addressNoResult);
+      }
+    } catch (_err) {
+      setAddressSearchError(TEXT.errAddressSearchFailed);
+    } finally {
+      setAddressSearchLoading(false);
+    }
+  };
+
+  const selectAddress = (item) => {
+    const selected = formatAddressOption(item);
+    if (!selected) return;
+    setForm((prev) => ({ ...prev, address: selected }));
+    setAddressSearchError("");
+    setAddressResults([]);
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -74,6 +128,16 @@ export default function Register() {
     const fullName = `${form.lastName}${form.firstName}`.trim();
     if (!fullName) {
       setError(TEXT.errNameRequired);
+      return;
+    }
+
+    if (!form.passwordConfirm) {
+      setError(TEXT.errPasswordConfirmRequired);
+      return;
+    }
+
+    if (form.password !== form.passwordConfirm) {
+      setError(TEXT.errPasswordMismatch);
       return;
     }
 
@@ -94,14 +158,14 @@ export default function Register() {
   return (
     <PageLayout hideIntro>
       <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 sm:p-8">
-        <h1 className="text-4xl sm:text-[2.6rem] font-extrabold tracking-tight text-center">{TEXT.title}</h1>
+        <h1 className="text-center text-4xl font-extrabold tracking-tight sm:text-[2.6rem]">{TEXT.title}</h1>
         <div className="mt-4 border-b-2 border-foreground/90" />
 
         <form onSubmit={submit} className="mt-8 space-y-8">
           <section>
             <h2 className="text-lg font-semibold">{TEXT.consentHeading}</h2>
-            <div className="mt-3 rounded-xl border border-border overflow-hidden">
-              <label className="flex items-center gap-3 px-4 py-4 bg-secondary/40 border-b border-border cursor-pointer">
+            <div className="mt-3 overflow-hidden rounded-xl border border-border">
+              <label className="flex cursor-pointer items-center gap-3 border-b border-border bg-secondary/40 px-4 py-4">
                 <input
                   type="checkbox"
                   className="h-4 w-4 rounded border-border"
@@ -111,7 +175,7 @@ export default function Register() {
                 <span className="text-sm font-semibold">{TEXT.agreeAll}</span>
               </label>
 
-              <label className="flex items-center justify-between gap-3 px-4 py-4 border-b border-border cursor-pointer">
+              <label className="flex cursor-pointer items-center justify-between gap-3 border-b border-border px-4 py-4">
                 <span className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -120,13 +184,13 @@ export default function Register() {
                     onChange={() => toggleAgreement("over14")}
                   />
                   <span className="text-sm">
-                    {TEXT.over14} <span className="text-primary font-semibold">{TEXT.required}</span>
+                    {TEXT.over14} <span className="font-semibold text-primary">{TEXT.required}</span>
                   </span>
                 </span>
               </label>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-border">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4">
+                <label className="flex cursor-pointer items-center gap-3">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-border"
@@ -134,7 +198,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("terms")}
                   />
                   <span className="text-sm">
-                    {TEXT.terms} <span className="text-primary font-semibold">{TEXT.required}</span>
+                    {TEXT.terms} <span className="font-semibold text-primary">{TEXT.required}</span>
                   </span>
                 </label>
                 <Link to="/terms/service" className="text-xs text-muted-foreground underline hover:text-primary">
@@ -142,8 +206,8 @@ export default function Register() {
                 </Link>
               </div>
 
-              <div className="flex items-center justify-between gap-3 px-4 py-4 border-b border-border">
-                <label className="flex items-center gap-3 cursor-pointer">
+              <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-4">
+                <label className="flex cursor-pointer items-center gap-3">
                   <input
                     type="checkbox"
                     className="h-4 w-4 rounded border-border"
@@ -151,7 +215,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("privacy")}
                   />
                   <span className="text-sm">
-                    {TEXT.privacy} <span className="text-primary font-semibold">{TEXT.required}</span>
+                    {TEXT.privacy} <span className="font-semibold text-primary">{TEXT.required}</span>
                   </span>
                 </label>
                 <Link to="/terms/privacy" className="text-xs text-muted-foreground underline hover:text-primary">
@@ -159,7 +223,7 @@ export default function Register() {
                 </Link>
               </div>
 
-              <label className="flex items-center justify-between gap-3 px-4 py-4 cursor-pointer">
+              <label className="flex cursor-pointer items-center justify-between gap-3 px-4 py-4">
                 <span className="flex items-center gap-3">
                   <input
                     type="checkbox"
@@ -168,7 +232,7 @@ export default function Register() {
                     onChange={() => toggleAgreement("collection")}
                   />
                   <span className="text-sm">
-                    {TEXT.collection} <span className="text-primary font-semibold">{TEXT.required}</span>
+                    {TEXT.collection} <span className="font-semibold text-primary">{TEXT.required}</span>
                   </span>
                 </span>
                 <span className="text-xs text-muted-foreground underline">{TEXT.detail}</span>
@@ -177,18 +241,18 @@ export default function Register() {
           </section>
 
           <section className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <input
                 className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
                 placeholder={TEXT.lastName}
                 value={form.lastName}
-                onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, lastName: e.target.value }))}
               />
               <input
                 className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
                 placeholder={TEXT.firstName}
                 value={form.firstName}
-                onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                onChange={(e) => setForm((prev) => ({ ...prev, firstName: e.target.value }))}
               />
             </div>
 
@@ -196,27 +260,82 @@ export default function Register() {
               className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
               placeholder={TEXT.email}
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             />
             <input
               type="password"
               className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
               placeholder={TEXT.password}
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => setForm((prev) => ({ ...prev, password: e.target.value }))}
+            />
+            <input
+              type="password"
+              className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
+              placeholder={TEXT.passwordConfirm}
+              value={form.passwordConfirm}
+              onChange={(e) => setForm((prev) => ({ ...prev, passwordConfirm: e.target.value }))}
             />
             <input
               className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
               placeholder={TEXT.phone}
               value={form.phone}
-              onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
             />
-            <input
-              className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
-              placeholder={TEXT.address}
-              value={form.address}
-              onChange={(e) => setForm({ ...form, address: e.target.value })}
-            />
+
+            <div className="space-y-2">
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_auto]">
+                <input
+                  className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
+                  placeholder={TEXT.addressSearchPlaceholder}
+                  value={addressQuery}
+                  onChange={(e) => {
+                    setAddressQuery(e.target.value);
+                    setAddressSearchError("");
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      void runAddressSearch();
+                    }
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => void runAddressSearch()}
+                  className="rounded-md border border-border bg-secondary/50 px-4 py-3 text-sm font-semibold transition-colors hover:bg-secondary disabled:cursor-not-allowed disabled:opacity-60"
+                  disabled={addressSearchLoading}
+                >
+                  {addressSearchLoading ? TEXT.addressSearching : TEXT.addressSearch}
+                </button>
+              </div>
+
+              {addressResults.length > 0 && (
+                <div className="max-h-40 overflow-y-auto rounded-md border border-border bg-background">
+                  {addressResults.map((item, idx) => {
+                    const label = formatAddressOption(item);
+                    return (
+                      <button
+                        key={`${label}-${idx}`}
+                        type="button"
+                        className="block w-full border-b border-border px-3 py-2 text-left text-sm last:border-b-0 hover:bg-secondary/40"
+                        onClick={() => selectAddress(item)}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              <input
+                className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
+                placeholder={TEXT.addressDetail}
+                value={form.address}
+                onChange={(e) => setForm((prev) => ({ ...prev, address: e.target.value }))}
+              />
+              {addressSearchError && <p className="text-xs text-red-600">{addressSearchError}</p>}
+            </div>
           </section>
 
           <div className="flex flex-wrap items-center gap-4">
@@ -237,4 +356,3 @@ export default function Register() {
     </PageLayout>
   );
 }
-

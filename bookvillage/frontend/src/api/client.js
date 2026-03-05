@@ -128,7 +128,9 @@ export const api = {
     register: (data) => request("/auth/register", { method: "POST", body: JSON.stringify(data) }),
     login: (data) => request("/auth/login", { method: "POST", body: JSON.stringify(data) }),
     logout: () => request("/auth/logout", { method: "POST" }),
+    findEmail: (name, email) => request("/auth/find-id", { method: "POST", body: JSON.stringify({ name, email }) }),
     findId: (name, email) => request("/auth/find-id", { method: "POST", body: JSON.stringify({ name, email }) }),
+    searchAddress: (q) => request(`/auth/address-search?q=${encodeURIComponent(q)}`),
     requestPasswordReset: (email) => request("/auth/password-reset/request", { method: "POST", body: JSON.stringify({ email }) }),
     confirmPasswordReset: (email, token, newPassword, userId) =>
       request("/auth/password-reset/confirm", {

@@ -310,6 +310,10 @@ public class LearningFeatureService {
         if (!order.getUserId().equals(userId)) {
             throw new IllegalArgumentException("Cannot create return request for another user");
         }
+        if (!"SHIPPED".equalsIgnoreCase(order.getStatus()) && !"DELIVERED".equalsIgnoreCase(order.getStatus())) {
+            securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/return", order.getStatus());
+            throw new IllegalArgumentException("Only shipped or delivered orders can request return");
+        }
         jdbcTemplate.update(
                 "INSERT INTO order_action_requests (order_id, user_id, action_type, reason, proof_file_name, status) VALUES (?, ?, 'RETURN', ?, ?, 'REQUESTED')",
                 orderId,
@@ -317,7 +321,31 @@ public class LearningFeatureService {
                 reason,
                 proofFileName
         );
+        order.setStatus("RETURN_REQUESTED");
+        orderRepository.save(order);
         securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/return", proofFileName);
+    }
+
+    @Transactional
+    public void requestOrderExchange(Long userId, Long orderId, String reason, String proofFileName) {
+        Order order = orderRepository.findById(orderId).orElseThrow(() -> new IllegalArgumentException("Order not found"));
+        if (!order.getUserId().equals(userId)) {
+            throw new IllegalArgumentException("Cannot create exchange request for another user");
+        }
+        if (!"SHIPPED".equalsIgnoreCase(order.getStatus()) && !"DELIVERED".equalsIgnoreCase(order.getStatus())) {
+            securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/exchange", order.getStatus());
+            throw new IllegalArgumentException("Only shipped or delivered orders can request exchange");
+        }
+        jdbcTemplate.update(
+                "INSERT INTO order_action_requests (order_id, user_id, action_type, reason, proof_file_name, status) VALUES (?, ?, 'EXCHANGE', ?, ?, 'REQUESTED')",
+                orderId,
+                userId,
+                reason,
+                proofFileName
+        );
+        order.setStatus("EXCHANGE_REQUESTED");
+        orderRepository.save(order);
+        securityLabService.simulate("REQ-COM-033", userId, "/api/mypage/orders/" + orderId + "/exchange", proofFileName);
     }
 
     public List<Map<String, Object>> getFavoritePosts(Long userId, boolean includePrivate) {

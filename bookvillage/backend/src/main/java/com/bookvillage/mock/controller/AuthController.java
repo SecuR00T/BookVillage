@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -67,6 +68,11 @@ public class AuthController {
         String newPassword = request != null ? request.get("newPassword") : null;
         learningFeatureService.confirmPasswordReset(userId, email, token, newPassword);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/address-search")
+    public ResponseEntity<List<Map<String, Object>>> searchAddress(@RequestParam("q") String query) {
+        return ResponseEntity.ok(learningFeatureService.searchAddress(null, query));
     }
 
     @PostMapping("/logout")

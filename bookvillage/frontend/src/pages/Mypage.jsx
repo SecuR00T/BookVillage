@@ -145,7 +145,6 @@ export default function Mypage() {
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
               <h1 className="text-3xl font-extrabold tracking-tight">마이페이지</h1>
-              <p className="mt-1 text-sm text-muted-foreground">핵심 요약만 표시합니다. 상세 기능은 하위 페이지에서 관리하세요.</p>
               <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-secondary px-3 py-1 text-xs text-secondary-foreground">
                 <Mail size={13} />
                 {profile.email}

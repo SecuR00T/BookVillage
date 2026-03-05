@@ -20,7 +20,7 @@ const Footer = () => (
     <div className="container mx-auto px-4 py-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
         <div>
-          <img src="/bookvillage-logo.svg?v=bukchon" alt="북촌" className="h-10 w-auto mb-3" />
+          <img src="/bookvillage-logo.svg?v=bukchon-v150" alt="북촌" className="h-10 w-auto mb-3" />
           <p className="text-muted-foreground text-sm leading-relaxed">
             북촌 온라인 서점.
             <br />

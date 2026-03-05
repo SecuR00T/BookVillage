@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { CheckCircle2, Truck } from "lucide-react";
 import { api } from "@/api/client";
@@ -9,8 +9,8 @@ const TEXT = {
   description: "주문 상태, 결제 금액, 배송 정보를 확인할 수 있습니다.",
   empty: "주문 내역이 없습니다.",
   goMypage: "마이페이지로 돌아가기",
-  status: "상태",
   amount: "결제금액",
+  payment: "결제수단",
   detail: "주문 상세보기",
   receipt: "영수증 다운로드",
   shippingInfo: "배송 정보",
@@ -28,6 +28,7 @@ const statusLabel = (status) => {
     CANCELLED: "주문 취소",
     CANCEL_REQUESTED: "취소 요청",
     RETURN_REQUESTED: "반품 요청",
+    EXCHANGE_REQUESTED: "교환 요청",
   };
   return map[key] || (status || "-");
 };
@@ -72,8 +73,18 @@ export default function Orders() {
                 주문번호: <span className="font-semibold">{latestOrder.orderNumber}</span>
               </p>
               <p className="mt-1 text-sm text-emerald-700">
-                결제금액: {Number(latestOrder.totalAmount || 0).toLocaleString("ko-KR")} KRW
+                {TEXT.amount}: {Number(latestOrder.totalAmount || 0).toLocaleString("ko-KR")} KRW
               </p>
+              {latestOrder.shippingAddress && (
+                <p className="mt-1 text-sm text-emerald-700">
+                  {TEXT.shippingAddress}: {latestOrder.shippingAddress}
+                </p>
+              )}
+              {latestOrder.paymentMethod && (
+                <p className="mt-1 text-sm text-emerald-700">
+                  {TEXT.payment}: {latestOrder.paymentMethod}
+                </p>
+              )}
             </div>
           </div>
         </section>

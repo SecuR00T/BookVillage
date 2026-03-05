@@ -17,7 +17,7 @@ const TEXT = {
   email: "이메일",
   password: "비밀번호",
   submit: "로그인",
-  findId: "아이디 찾기",
+  findEmail: "이메일 찾기",
   resetPassword: "비밀번호 재설정",
   noAccount: "계정이 없나요?",
   register: "회원가입",
@@ -31,6 +31,15 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  const toKoreanLoginError = (message) => {
+    const raw = String(message || "").trim();
+    const normalized = raw.toLowerCase();
+    if (normalized.includes("invalid credentials") || normalized.includes("bad credentials")) {
+      return "이메일 또는 비밀번호가 올바르지 않습니다.";
+    }
+    return raw || TEXT.loginFail;
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     setError("");
@@ -38,13 +47,13 @@ export default function Login() {
       await login(email, password);
       navigate("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : TEXT.loginFail);
+      setError(toKoreanLoginError(err instanceof Error ? err.message : ""));
     }
   };
 
   return (
     <PageLayout hideIntro>
-      <section className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[1.1fr_1fr]">
+      <section className="grid w-full gap-6 lg:grid-cols-[1.15fr_1fr] xl:gap-8">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[hsl(24,38%,27%)] via-[hsl(28,34%,32%)] to-[hsl(152,28%,36%)] p-7 text-white">
           <div className="absolute -top-14 -right-12 h-44 w-44 rounded-full bg-white/10" />
           <div className="absolute -bottom-16 -left-12 h-44 w-44 rounded-full bg-white/10" />
@@ -102,10 +111,10 @@ export default function Login() {
 
             <div className="grid grid-cols-2 gap-2.5">
               <Link
-                to="/account-recovery?mode=id"
+                to="/account-recovery?mode=email"
                 className="inline-flex items-center justify-center rounded-xl border border-slate-300 bg-slate-50 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-100"
               >
-                {TEXT.findId}
+                {TEXT.findEmail}
               </Link>
               <Link
                 to="/account-recovery?mode=reset"

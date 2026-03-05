@@ -69,7 +69,7 @@ const Index = () => {
         <HeroBanner />
 
         <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-          <div className="grid grid-cols-4 sm:grid-cols-8 gap-2.5 sm:gap-4">
+          <div className="grid grid-cols-4 sm:grid-cols-7 gap-2.5 sm:gap-4">
             {quickCategories.map((item) => (
               <Link
                 key={item.label}
@@ -85,7 +85,7 @@ const Index = () => {
           </div>
         </section>
 
-        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">

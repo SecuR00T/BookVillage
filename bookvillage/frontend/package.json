@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "build": "vite build",
     "build:dev": "vite build --mode development",
+    "clean:cache": "node -e \"const fs=require('fs');['dist','.vite','node_modules/.vite'].forEach((p)=>fs.rmSync(p,{recursive:true,force:true}));\"",
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",

@@ -1,4 +1,4 @@
-package com.bookvillage.mock
+﻿package com.bookvillage.mock
 
 import android.annotation.SuppressLint
 import android.os.Bundle
@@ -6,34 +6,63 @@ import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 
-/**
- * BOOKVILLAGE 모형 - Android WebView
- * React 프론트엔드를 로드하여 모바일 앱처럼 사용
- * 보안 교육 및 모의해킹 테스트용
- */
 class MainActivity : AppCompatActivity() {
 
-    // 개발: "http://10.0.2.2:3000" (에뮬레이터 -> localhost)
-    // 개발: "http://YOUR_PC_IP:3000" (실기기)
-    // 배포: "https://your-domain.com"
-    private val webAppUrl = "http://10.0.2.2:3000"
+    // USB real-device mode:
+    // - BookVillage frontend via adb reverse: http://127.0.0.1:8080 -> host:80
+    // - Admin frontend via adb reverse:       http://127.0.0.1:18080 -> host:18080
+    private val bookVillageUrl = "http://127.0.0.1:8080"
+    private val adminUrl = "http://127.0.0.1:18080"
+
+    private lateinit var webView: WebView
+    private lateinit var btnBookVillage: Button
+    private lateinit var btnAdmin: Button
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        val webView = findViewById<WebView>(R.id.webView)
+        webView = findViewById(R.id.webView)
+        btnBookVillage = findViewById(R.id.btnBookVillage)
+        btnAdmin = findViewById(R.id.btnAdmin)
+
         webView.settings.apply {
             javaScriptEnabled = true
             domStorageEnabled = true
-            cacheMode = WebSettings.CACHE_MODE_DEFAULT
+            cacheMode = WebSettings.LOAD_NO_CACHE
             mixedContentMode = WebSettings.MIXED_CONTENT_COMPATIBILITY_MODE
         }
         webView.webViewClient = WebViewClient()
         webView.webChromeClient = WebChromeClient()
-        webView.loadUrl(webAppUrl)
+
+        btnBookVillage.setOnClickListener { switchSite(bookVillageUrl, isBookVillage = true) }
+        btnAdmin.setOnClickListener { switchSite(adminUrl, isBookVillage = false) }
+
+        switchSite(bookVillageUrl, isBookVillage = true)
+
+        onBackPressedDispatcher.addCallback(
+            this,
+            object : OnBackPressedCallback(true) {
+                override fun handleOnBackPressed() {
+                    if (webView.canGoBack()) {
+                        webView.goBack()
+                    } else {
+                        finish()
+                    }
+                }
+            }
+        )
+    }
+
+    private fun switchSite(url: String, isBookVillage: Boolean) {
+        btnBookVillage.isEnabled = !isBookVillage
+        btnAdmin.isEnabled = isBookVillage
+        webView.clearCache(true)
+        webView.loadUrl(url)
     }
 }

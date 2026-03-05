@@ -292,9 +292,6 @@ export default function CustomerService() {
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-border bg-background p-4">
                   <h3 className="text-sm font-semibold">내 문의 목록</h3>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    등록한 문의 내역을 별도 페이지에서 확인합니다.
-                  </p>
                   <Link
                     to="/customer-service/inquiries"
                     className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
@@ -305,9 +302,6 @@ export default function CustomerService() {
 
                 <div className="rounded-xl border border-border bg-background p-4">
                   <h3 className="text-sm font-semibold">문의 상세</h3>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    문의 상세는 목록 페이지의 상세 보기 버튼에서 이동할 수 있습니다.
-                  </p>
                   <Link
                     to="/customer-service/inquiries"
                     className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"

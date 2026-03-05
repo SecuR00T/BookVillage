@@ -5,7 +5,7 @@ import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
   title: "주문 상세",
-  description: "주문 정보와 상품, 배송 추적, 취소/반품/교환 요청 상태를 확인할 수 있습니다.",
+  description: "주문 정보와 상품, 배송 정보, 취소/반품/교환 요청 상태를 확인할 수 있습니다.",
   goOrders: "주문 목록으로 돌아가기",
   loadFail: "주문 상세를 불러오지 못했습니다.",
   notFound: "주문 정보를 찾을 수 없습니다.",
@@ -22,9 +22,6 @@ const TEXT = {
   qty: "수량",
   unitPrice: "단가",
   lineTotal: "합계",
-  trackingPlaceholder: "배송 추적 URL 입력",
-  trackingButton: "배송 추적",
-  trackingResult: "추적 결과",
   actionHeader: "취소/반품/교환 요청",
   cancelButton: "주문 취소 요청",
   refundButton: "환불(반품) 요청",
@@ -76,8 +73,6 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  const [trackingUrl, setTrackingUrl] = useState("");
-  const [trackingResult, setTrackingResult] = useState("");
   const [reason, setReason] = useState("");
   const [proofFileName, setProofFileName] = useState("");
   const [actionMessage, setActionMessage] = useState("");
@@ -112,16 +107,6 @@ export default function OrderDetail() {
   const canCancel = normalizedStatus === "PENDING" || normalizedStatus === "PAID";
   const canRefund = normalizedStatus === "SHIPPED" || normalizedStatus === "DELIVERED";
   const canExchange = normalizedStatus === "SHIPPED" || normalizedStatus === "DELIVERED";
-
-  const track = async () => {
-    if (!order?.id || !trackingUrl.trim()) return;
-    try {
-      const result = await api.orders.track(order.id, trackingUrl.trim());
-      setTrackingResult(`${result.status} (${result.currentLocation})`);
-    } catch (err) {
-      setTrackingResult(err instanceof Error ? err.message : "배송 추적에 실패했습니다.");
-    }
-  };
 
   const requestCancel = async () => {
     if (!order?.id || !canCancel) return;
@@ -302,24 +287,6 @@ export default function OrderDetail() {
             {actionMessage && <p className="mt-2 text-xs text-emerald-700">{actionMessage}</p>}
           </section>
 
-          <section className="rounded-2xl border border-border bg-card p-4">
-            <div className="flex flex-col gap-2 md:flex-row">
-              <input
-                className="flex-1 rounded border border-input bg-background px-2 py-1.5 text-sm"
-                placeholder={TEXT.trackingPlaceholder}
-                value={trackingUrl}
-                onChange={(e) => setTrackingUrl(e.target.value)}
-              />
-              <button className="rounded bg-primary px-3 py-1.5 text-sm font-semibold text-primary-foreground hover:opacity-90" onClick={track}>
-                {TEXT.trackingButton}
-              </button>
-            </div>
-            {trackingResult && (
-              <p className="mt-2 text-xs text-muted-foreground">
-                {TEXT.trackingResult}: {trackingResult}
-              </p>
-            )}
-          </section>
         </div>
       )}
     </PageLayout>

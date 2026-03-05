@@ -6,18 +6,16 @@ import PageLayout from "@/components/PageLayout";
 
 const TEXT = {
   title: "내 주문",
-  description: "주문 상태, 결제 금액, 배송 추적 정보를 확인할 수 있습니다.",
+  description: "주문 상태, 결제 금액, 배송 정보를 확인할 수 있습니다.",
   empty: "주문 내역이 없습니다.",
   goMypage: "마이페이지로 돌아가기",
   status: "상태",
   amount: "결제금액",
   detail: "주문 상세보기",
   receipt: "영수증 다운로드",
-  trackingPlaceholder: "배송 추적 URL 입력",
-  trackingButton: "배송 추적",
-  trackingResult: "추적 결과",
+  shippingInfo: "배송 정보",
+  shippingAddress: "배송지",
   loadFail: "주문 목록을 불러오지 못했습니다.",
-  trackingFail: "배송 추적에 실패했습니다.",
 };
 
 const statusLabel = (status) => {
@@ -39,8 +37,6 @@ export default function Orders() {
   const latestOrder = location.state?.latestOrder || null;
 
   const [orders, setOrders] = useState([]);
-  const [trackingUrl, setTrackingUrl] = useState({});
-  const [trackingResult, setTrackingResult] = useState({});
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -57,22 +53,6 @@ export default function Orders() {
     }
     return [latestOrder, ...orders];
   }, [orders, latestOrder]);
-
-  const track = async (orderId) => {
-    const url = trackingUrl[orderId];
-    if (!url) return;
-    try {
-      const result = await api.orders.track(orderId, url);
-      const locationLabel = result?.currentLocation || "위치 확인 불가";
-      const status = result?.status || "UNKNOWN";
-      setTrackingResult((prev) => ({ ...prev, [orderId]: `${status} (${locationLabel})` }));
-    } catch (err) {
-      setTrackingResult((prev) => ({
-        ...prev,
-        [orderId]: err instanceof Error ? err.message : TEXT.trackingFail,
-      }));
-    }
-  };
 
   return (
     <PageLayout title={TEXT.title} description={TEXT.description}>
@@ -136,33 +116,15 @@ export default function Orders() {
                 )}
               </div>
 
-              {order.id && (
-                <div className="mt-3 rounded-xl border border-border bg-background p-3">
-                  <p className="mb-2 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
-                    <Truck size={13} />
-                    배송 추적
-                  </p>
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <input
-                      className="flex-1 rounded-lg border border-input bg-card px-3 py-2 text-sm"
-                      placeholder={TEXT.trackingPlaceholder}
-                      value={trackingUrl[order.id] || ""}
-                      onChange={(e) => setTrackingUrl((prev) => ({ ...prev, [order.id]: e.target.value }))}
-                    />
-                    <button
-                      className="rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground hover:opacity-90"
-                      onClick={() => track(order.id)}
-                    >
-                      {TEXT.trackingButton}
-                    </button>
-                  </div>
-                  {trackingResult[order.id] && (
-                    <p className="mt-2 text-xs text-muted-foreground">
-                      {TEXT.trackingResult}: {trackingResult[order.id]}
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="mt-3 rounded-xl border border-border bg-background p-3">
+                <p className="mb-1 inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground">
+                  <Truck size={13} />
+                  {TEXT.shippingInfo}
+                </p>
+                <p className="text-sm text-foreground">
+                  {TEXT.shippingAddress}: {order.shippingAddress || "-"}
+                </p>
+              </div>
             </div>
           ))}
         </div>

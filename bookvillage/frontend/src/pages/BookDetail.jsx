@@ -306,7 +306,7 @@ const BookDetail = () => {
                 </button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-2">
                 <div className="rounded-lg border border-border p-3 text-xs text-muted-foreground flex items-center gap-2">
                   <Truck size={14} className="text-primary" />
                   오늘 주문 시 빠른 출고

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Clock3, Heart, Loader2, Mail, Ticket, UserRound, Wallet } from "lucide-react";
+import { Clock3, Heart, Loader2, Mail, Ticket, Wallet } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { api } from "@/api/client";
 import PageLayout from "@/components/PageLayout";
@@ -270,10 +270,6 @@ export default function Mypage() {
                 <p className="text-xs text-muted-foreground">주소</p>
                 <p className="text-sm font-semibold">{profile.address || "-"}</p>
               </div>
-            </div>
-            <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-              <UserRound size={13} />
-              비밀번호 변경, 계정 탈퇴 등 민감한 작업은 계정 관리 페이지에서만 처리됩니다.
             </div>
           </section>
         </div>

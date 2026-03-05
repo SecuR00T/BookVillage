@@ -94,7 +94,7 @@ export default function Board() {
   };
 
   return (
-    <PageLayout title="회원 게시판" description="목록에서 게시글을 선택하면 상세 페이지로 이동합니다. 작성도 별도 페이지에서 진행합니다.">
+    <PageLayout title="회원 게시판">
       <section className="rounded-2xl border border-border bg-card p-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-base font-bold">게시글 목록</h2>

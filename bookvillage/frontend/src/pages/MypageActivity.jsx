@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { api } from "@/api/client";
@@ -19,7 +19,6 @@ const extractBookId = (row) => {
 
 export default function MypageActivity() {
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
   const [recentViews, setRecentViews] = useState([]);
   const [wishlist, setWishlist] = useState([]);
@@ -33,43 +32,41 @@ export default function MypageActivity() {
   const [savingReviewId, setSavingReviewId] = useState(null);
   const [deletingReviewId, setDeletingReviewId] = useState(null);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setLoading(true);
-    setError("");
 
-    const [rv, ws, fp, mr] = await Promise.allSettled([
-      api.mypage.recentViews(),
-      api.mypage.wishlist(),
-      api.mypage.favoritePosts(includePrivateFavorite),
-      api.mypage.myReviews(),
-    ]);
+    try {
+      const [rv, ws, fp, mr] = await Promise.allSettled([
+        api.mypage.recentViews(),
+        api.mypage.wishlist(),
+        api.mypage.favoritePosts(includePrivateFavorite),
+        api.mypage.myReviews(),
+      ]);
 
-    setRecentViews(rv.status === "fulfilled" ? rv.value || [] : []);
-    setWishlist(ws.status === "fulfilled" ? ws.value || [] : []);
-    setFavoritePosts(fp.status === "fulfilled" ? fp.value || [] : []);
-    const loadedReviews = mr.status === "fulfilled" ? mr.value || [] : [];
-    setMyReviews(loadedReviews);
-    setReviewDrafts((prev) => {
-      const next = {};
-      loadedReviews.forEach((review) => {
-        const existing = prev[review.id];
-        next[review.id] = {
-          rating: Number(existing?.rating ?? review.rating ?? 5),
-          content: existing?.content ?? review.content ?? "",
-        };
+      setRecentViews(rv.status === "fulfilled" ? rv.value || [] : []);
+      setWishlist(ws.status === "fulfilled" ? ws.value || [] : []);
+      setFavoritePosts(fp.status === "fulfilled" ? fp.value || [] : []);
+      const loadedReviews = mr.status === "fulfilled" ? mr.value || [] : [];
+      setMyReviews(loadedReviews);
+      setReviewDrafts((prev) => {
+        const next = {};
+        loadedReviews.forEach((review) => {
+          const existing = prev[review.id];
+          next[review.id] = {
+            rating: Number(existing?.rating ?? review.rating ?? 5),
+            content: existing?.content ?? review.content ?? "",
+          };
+        });
+        return next;
       });
-      return next;
-    });
-
-    if ([rv, ws, fp, mr].some((result) => result.status === "rejected")) {
-      setError("일부 활동 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
-  };
+  }, [includePrivateFavorite]);
 
   useEffect(() => {
     loadData();
-  }, [includePrivateFavorite]);
+  }, [loadData]);
 
   const removeWishlist = async (wishlistId) => {
     setActionError("");
@@ -156,7 +153,7 @@ export default function MypageActivity() {
   if (loading) {
     return (
       <PageLayout hideIntro>
-        <div className="mx-auto max-w-6xl rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
+        <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
           <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
           활동 정보를 불러오는 중입니다.
         </div>
@@ -166,7 +163,7 @@ export default function MypageActivity() {
 
   return (
     <PageLayout title="활동 관리" description="최근 조회, 찜 목록, 관심 게시글, 내가 작성한 리뷰를 관리합니다.">
-      <section className="mx-auto max-w-6xl space-y-5">
+      <section className="space-y-5">
         <div className="flex flex-wrap items-center gap-2">
           <Link to="/mypage" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary">
             마이페이지 홈
@@ -179,7 +176,6 @@ export default function MypageActivity() {
           </Link>
         </div>
 
-        {error && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
         {actionError && <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{actionError}</p>}
         {actionMessage && <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{actionMessage}</p>}
 

@@ -147,7 +147,7 @@ export default function MypageAccount() {
   }
 
   return (
-    <PageLayout title="계정 관리" description="프로필 수정, 비밀번호 변경, 계정 탈퇴는 이 페이지에서 관리합니다.">
+    <PageLayout title="계정 관리">
       <section className="mx-auto max-w-6xl space-y-5">
         <div className="flex flex-wrap items-center gap-2">
           <Link to="/mypage" className="rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary">

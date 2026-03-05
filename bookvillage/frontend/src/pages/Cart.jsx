@@ -181,7 +181,7 @@ export default function Cart() {
 
   if (loading) {
     return (
-      <PageLayout title="\uC7A5\uBC14\uAD6C\uB2C8" description="\uACB0\uC81C \uC804 \uC8FC\uBB38 \uB0B4\uC5ED\uC744 \uD655\uC778\uD558\uC138\uC694.">
+      <PageLayout title="장바구니" description="결제 전 주문 내역을 확인하세요.">
         <div className="rounded-2xl border border-border bg-card p-8 text-center text-muted-foreground">
           <Loader2 className="mx-auto mb-3 h-5 w-5 animate-spin" />
           {"\uC7A5\uBC14\uAD6C\uB2C8\uB97C \uBD88\uB7EC\uC624\uB294 \uC911\uC785\uB2C8\uB2E4."}
@@ -191,7 +191,7 @@ export default function Cart() {
   }
 
   return (
-    <PageLayout title="\uC7A5\uBC14\uAD6C\uB2C8" description="\uCFE0\uD3F0\uACFC \uD3EC\uC778\uD2B8\uB97C \uC801\uC6A9\uD574 \uCD5C\uC885 \uACB0\uC81C \uAE08\uC561\uC744 \uD655\uC778\uD558\uC138\uC694.">
+    <PageLayout title="장바구니" description="쿠폰과 포인트를 적용해 최종 결제 금액을 확인하세요.">
       {error && <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       {notice && <p className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>}
 
@@ -347,7 +347,7 @@ export default function Cart() {
                     className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm"
                     value={shippingAddress}
                     onChange={(e) => setShippingAddress(e.target.value)}
-                    placeholder="\uBC30\uC1A1\uC9C0 \uC8FC\uC18C"
+                    placeholder="배송지 주소"
                   />
                 </label>
               </div>

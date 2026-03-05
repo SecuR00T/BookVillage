@@ -4,7 +4,7 @@ import Header from "@/components/Header";
 import HeroBanner from "@/components/HeroBanner";
 import BookSection from "@/components/BookSection";
 import Footer from "@/components/Footer";
-import { Truck, Shield, RotateCcw, Clock, ArrowRight } from "lucide-react";
+import { Truck, RotateCcw, Clock, ArrowRight } from "lucide-react";
 import { api } from "@/api/client";
 import { toCardBook } from "@/lib/bookNormalizer";
 
@@ -12,12 +12,10 @@ const features = [
   { icon: Truck, label: "무료배송", desc: "2만원 이상 구매 시" },
   { icon: Clock, label: "당일배송", desc: "오후 1시 이전 주문" },
   { icon: RotateCcw, label: "무료반품", desc: "수령 후 7일 이내" },
-  { icon: Shield, label: "안전결제", desc: "SSL 보안 적용" },
 ];
 
 const quickCategories = [
   { label: "소설", emoji: "📖" },
-  { label: "경제", emoji: "💼" },
   { label: "자기계발", emoji: "🧠" },
   { label: "에세이", emoji: "🎨" },
   { label: "IT", emoji: "💻" },
@@ -87,7 +85,7 @@ const Index = () => {
           </div>
         </section>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="mx-auto grid max-w-5xl grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {features.map(({ icon: Icon, label, desc }) => (
             <div key={label} className="flex items-center gap-3 bg-card rounded-xl p-4 border border-border">
               <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -108,7 +106,7 @@ const Index = () => {
           <>
             <BookSection title="오늘의 신간" emoji="📖" books={newBooks} moreTo="/books" />
 
-            <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-r from-[hsl(220,72%,28%)] to-[hsl(220,58%,44%)] px-6 py-7 sm:px-9 sm:py-8">
+            <section className="relative overflow-hidden rounded-[22px] bg-gradient-to-r from-[hsl(24,48%,27%)] to-[hsl(28,45%,38%)] px-6 py-7 sm:px-9 sm:py-8">
               <div className="absolute -left-8 top-1/2 h-36 w-36 -translate-y-1/2 rounded-full bg-white/10" />
               <div className="absolute right-8 -top-10 h-44 w-44 rounded-full bg-white/10" />
               <div className="relative flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

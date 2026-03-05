@@ -22,16 +22,20 @@ const Header = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
   const boardPath = user ? "/board" : "/login";
-  const navItems = useMemo(
-    () => [
-      { label: "공지사항", to: "/customer-service?tab=notice" },
-      { label: "회원게시판", to: boardPath },
-      ...categories.map((cat) => ({
+
+  const categoryNavItems = useMemo(
+    () =>
+      categories.map((cat) => ({
         label: cat,
         to: `/books?category=${encodeURIComponent(cat)}`,
       })),
+    [],
+  );
+  const utilityNavItems = useMemo(
+    () => [
+      { label: "공지사항", to: "/customer-service?tab=notice" },
+      { label: "회원게시판", to: boardPath },
     ],
     [boardPath],
   );
@@ -43,8 +47,6 @@ const Header = () => {
           <Link to="/mypage" className="hover:underline opacity-90 hover:opacity-100 transition-opacity">마이페이지</Link>
           <span className="opacity-40">|</span>
           <Link to="/orders" className="hover:underline opacity-90 hover:opacity-100 transition-opacity">내 주문</Link>
-          <span className="opacity-40">|</span>
-          <Link to="/board" className="hover:underline opacity-90 hover:opacity-100 transition-opacity">회원게시판</Link>
           {isAdmin && (
             <>
               <span className="opacity-40">|</span>
@@ -92,12 +94,8 @@ const Header = () => {
 
       <div className="container mx-auto px-4 py-3.5">
         <div className="flex items-center justify-between gap-4">
-          <Link to="/" className="flex shrink-0 items-center gap-2.5">
-            <img src="/bookvillage-logo.svg" alt="BOOKVILLAGE" className="h-9 sm:h-11 w-auto" />
-            <div className="leading-tight">
-              <p className="text-xl sm:text-2xl font-extrabold tracking-[0.06em] text-[#3d2a1f]">BOOKVILLAGE</p>
-              <p className="text-xs sm:text-sm font-semibold text-[#5a4638]">책 읽는 마을</p>
-            </div>
+          <Link to="/" className="flex shrink-0 items-center">
+            <img src="/bookvillage-logo.svg?v=bukchon" alt="북촌" className="h-9 sm:h-11 w-auto" />
           </Link>
 
           <form onSubmit={handleSearch} className="hidden sm:flex flex-1 max-w-2xl">
@@ -167,17 +165,30 @@ const Header = () => {
 
       <div className="border-t border-border/80">
         <div className="container mx-auto px-4">
-          <nav className="hidden sm:flex gap-6 py-2.5 text-sm font-medium text-muted-foreground">
-            {navItems.map((item) => (
-              <button
-                key={item.label}
-                className="relative whitespace-nowrap transition-all duration-300 hover:text-primary after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
-                onClick={() => navigate(item.to)}
-              >
-                {item.label}
-              </button>
-            ))}
-          </nav>
+          <div className="hidden sm:flex items-center justify-between py-2.5 text-sm font-medium text-muted-foreground">
+            <nav className="flex items-center gap-6">
+              {categoryNavItems.map((item) => (
+                <button
+                  key={item.label}
+                  className="relative whitespace-nowrap transition-all duration-300 hover:text-primary after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+                  onClick={() => navigate(item.to)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            <nav className="flex items-center gap-6 pl-6">
+              {utilityNavItems.map((item) => (
+                <button
+                  key={item.label}
+                  className="relative whitespace-nowrap transition-all duration-300 hover:text-primary after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-primary after:transition-all after:duration-300 hover:after:w-full"
+                  onClick={() => navigate(item.to)}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
       </div>
 
@@ -191,7 +202,7 @@ const Header = () => {
             className="sm:hidden overflow-hidden border-t border-border bg-card/95 backdrop-blur-md"
           >
             <div className="p-4 space-y-2.5">
-              {navItems.map((item, idx) => (
+              {categoryNavItems.map((item, idx) => (
                 <motion.button
                   key={item.label}
                   initial={{ opacity: 0, x: -8 }}
@@ -205,6 +216,19 @@ const Header = () => {
                 >
                   {item.label}
                 </motion.button>
+              ))}
+              <hr className="border-border" />
+              {utilityNavItems.map((item) => (
+                <button
+                  key={item.label}
+                  className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground transition-colors"
+                  onClick={() => {
+                    navigate(item.to);
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  {item.label}
+                </button>
               ))}
               <hr className="border-border" />
               <Link to="/guest-orders" className="block w-full text-left py-2 px-3 rounded-lg hover:bg-secondary text-sm text-foreground">

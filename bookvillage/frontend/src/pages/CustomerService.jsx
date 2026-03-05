@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import { Bell, HelpCircle, MessageSquareText, Paperclip, PlusCircle } from "lucide-react";
+import { Bell, HelpCircle, MessageSquareText, PlusCircle } from "lucide-react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
@@ -17,16 +17,21 @@ const tabs = [
   { key: TAB_KEYS.INQUIRY, label: "1:1 문의", icon: MessageSquareText },
 ];
 
+const formatCreatedAt = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleString("ko-KR");
+};
+
 export default function CustomerService() {
   const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [list, setList] = useState([]);
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
-  const [selectedInquiryId, setSelectedInquiryId] = useState(null);
-  const [attachmentMessage, setAttachmentMessage] = useState("");
   const [inquiryError, setInquiryError] = useState("");
+  const [inquiryMessage, setInquiryMessage] = useState("");
 
   const [notices, setNotices] = useState([]);
   const [selectedNoticeId, setSelectedNoticeId] = useState(null);
@@ -54,17 +59,6 @@ export default function CustomerService() {
       return next;
     });
   };
-
-  const loadInquiries = (preferredId) =>
-    api.customerService.list().then((v) => {
-      const rows = v || [];
-      setList(rows);
-      setSelectedInquiryId((current) => {
-        if (preferredId && rows.some((row) => row.id === preferredId)) return preferredId;
-        if (current && rows.some((row) => row.id === current)) return current;
-        return rows[0]?.id ?? null;
-      });
-    });
 
   const loadNoticeDetail = async (noticeId) => {
     if (!noticeId) return;
@@ -121,53 +115,24 @@ export default function CustomerService() {
     void loadFaqs("");
   }, []);
 
-  useEffect(() => {
-    if (!user?.id) {
-      setList([]);
-      setSelectedInquiryId(null);
-      return;
-    }
-    loadInquiries().catch(() => {
-      setInquiryError("문의 목록을 불러오지 못했습니다.");
-    });
-  }, [user?.id]);
-
   const submit = async (e) => {
     e.preventDefault();
     if (!user) {
       setInquiryError("로그인 후 1:1 문의를 등록할 수 있습니다.");
+      setInquiryMessage("");
       return;
     }
     setInquiryError("");
+    setInquiryMessage("");
     try {
-      const created = await api.customerService.create({ subject, content });
+      await api.customerService.create({ subject, content });
       setSubject("");
       setContent("");
-      await loadInquiries(created?.id ?? null);
-      setAttachmentMessage("문의가 등록되었습니다.");
+      setInquiryMessage("문의가 등록되었습니다. 내 문의 목록에서 상태를 확인할 수 있습니다.");
     } catch (err) {
       setInquiryError(err instanceof Error ? err.message : "문의 등록에 실패했습니다.");
     }
   };
-
-  const uploadAttachment = async (file) => {
-    if (!file || !selectedInquiryId || !user) return;
-    try {
-      const result = await api.support.uploadInquiryAttachment(selectedInquiryId, file);
-      setAttachmentMessage(result?.message || "첨부파일이 등록되었습니다.");
-    } catch (err) {
-      setInquiryError(err instanceof Error ? err.message : "첨부파일 등록에 실패했습니다.");
-    }
-  };
-
-  const formatCreatedAt = (value) => {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    return date.toLocaleString("ko-KR");
-  };
-
-  const selectedInquiry = list.find((inquiry) => inquiry.id === selectedInquiryId) || null;
 
   return (
     <PageLayout title="고객센터" description="공지사항, FAQ, 1:1 문의를 한 화면에서 확인할 수 있습니다.">
@@ -302,95 +267,59 @@ export default function CustomerService() {
               </div>
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
-              <div>
-                <form onSubmit={submit} className="space-y-2 rounded-xl border border-border bg-background p-4">
-                  <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
-                    <PlusCircle size={14} />
-                    문의 작성
-                  </h3>
-                  <input
-                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm"
-                    placeholder="문의 제목"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                  />
-                  <textarea
-                    className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm"
-                    rows={4}
-                    placeholder="문의 내용을 입력하세요."
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                  />
-                  <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">문의 등록</button>
-                </form>
+            <>
+              <form onSubmit={submit} className="space-y-2 rounded-xl border border-border bg-background p-4">
+                <h3 className="inline-flex items-center gap-2 text-sm font-semibold">
+                  <PlusCircle size={14} />
+                  문의 작성
+                </h3>
+                <input
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm"
+                  placeholder="문의 제목"
+                  value={subject}
+                  onChange={(e) => setSubject(e.target.value)}
+                />
+                <textarea
+                  className="w-full rounded-lg border border-input bg-card px-3 py-2 text-sm"
+                  rows={4}
+                  placeholder="문의 내용을 입력하세요."
+                  value={content}
+                  onChange={(e) => setContent(e.target.value)}
+                />
+                <button className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">문의 등록</button>
+              </form>
 
-                <div className="mt-4 rounded-xl border border-border bg-background p-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <p className="text-sm font-semibold">첨부파일</p>
-                    <span className="text-xs text-muted-foreground">문의 선택 후 업로드</span>
-                  </div>
-                  <label className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-border px-3 py-1.5 text-xs hover:bg-secondary">
-                    <Paperclip size={13} />
-                    파일 선택
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={(e) => {
-                        uploadAttachment(e.target.files?.[0] || null);
-                        e.target.value = "";
-                      }}
-                    />
-                  </label>
-                  {attachmentMessage && <p className="mt-2 text-xs text-muted-foreground">{attachmentMessage}</p>}
-                </div>
-              </div>
-
-              <div className="space-y-3">
+              <div className="mt-4 grid gap-3 sm:grid-cols-2">
                 <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="mb-2 text-sm font-semibold">내 문의 목록</h3>
-                  <div className="space-y-2">
-                    {list.map((v) => (
-                      <label key={v.id} className="block cursor-pointer rounded-lg border border-border px-3 py-2 text-sm hover:bg-secondary/50">
-                        <input
-                          type="radio"
-                          className="mr-2"
-                          checked={selectedInquiryId === v.id}
-                          onChange={() => setSelectedInquiryId(v.id)}
-                        />
-                        <span className="font-semibold">{v.subject}</span>
-                        <span className="ml-2 text-xs text-muted-foreground">{v.status}</span>
-                      </label>
-                    ))}
-                    {list.length === 0 && <p className="text-xs text-muted-foreground">작성된 문의가 없습니다.</p>}
-                  </div>
+                  <h3 className="text-sm font-semibold">내 문의 목록</h3>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    등록한 문의 내역을 별도 페이지에서 확인합니다.
+                  </p>
+                  <Link
+                    to="/customer-service/inquiries"
+                    className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
+                  >
+                    목록으로 이동
+                  </Link>
                 </div>
 
-                <article className="rounded-xl border border-border bg-background p-4">
+                <div className="rounded-xl border border-border bg-background p-4">
                   <h3 className="text-sm font-semibold">문의 상세</h3>
-                  {!selectedInquiry && (
-                    <p className="mt-2 text-xs text-muted-foreground">조회할 문의를 선택해 주세요.</p>
-                  )}
-                  {selectedInquiry && (
-                    <div className="mt-2 space-y-2 text-sm">
-                      <p className="font-semibold">{selectedInquiry.subject}</p>
-                      <p className="text-xs text-muted-foreground">
-                        상태: {selectedInquiry.status} | 작성일: {formatCreatedAt(selectedInquiry.createdAt)}
-                      </p>
-                      <p className="whitespace-pre-wrap leading-6">{selectedInquiry.content || "내용이 없습니다."}</p>
-                      {selectedInquiry.adminAnswer && (
-                        <div className="rounded-md bg-muted/40 p-3">
-                          <p className="text-xs font-semibold text-muted-foreground">관리자 답변</p>
-                          <p className="mt-1 whitespace-pre-wrap">{selectedInquiry.adminAnswer}</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </article>
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    문의 상세는 목록 페이지의 상세 보기 버튼에서 이동할 수 있습니다.
+                  </p>
+                  <Link
+                    to="/customer-service/inquiries"
+                    className="mt-3 inline-flex rounded-lg border border-border px-3 py-1.5 text-xs font-semibold hover:bg-secondary"
+                  >
+                    상세 페이지 이동
+                  </Link>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
+          {inquiryMessage && <p className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">{inquiryMessage}</p>}
           {inquiryError && <p className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{inquiryError}</p>}
         </section>
       )}

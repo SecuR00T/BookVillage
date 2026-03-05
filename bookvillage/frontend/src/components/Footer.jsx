@@ -20,9 +20,9 @@ const Footer = () => (
     <div className="container mx-auto px-4 py-10">
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 text-sm">
         <div>
-          <img src="/bookvillage-logo.svg" alt="BOOKVILLAGE" className="h-10 w-auto mb-3" />
+          <img src="/bookvillage-logo.svg?v=bukchon" alt="북촌" className="h-10 w-auto mb-3" />
           <p className="text-muted-foreground text-sm leading-relaxed">
-            BOOKVILLAGE 온라인 서점.
+            북촌 온라인 서점.
             <br />
             언제 어디서나 좋은 책을 만나보세요.
           </p>
@@ -59,7 +59,7 @@ const Footer = () => (
       </div>
 
       <div className="mt-8 pt-5 border-t border-border flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-xs text-muted-foreground">
-        <p>(c) 2026 BOOKVILLAGE. All rights reserved.</p>
+        <p>(c) 2026 북촌. All rights reserved.</p>
         <p>모의 해킹 테스트용 사이트입니다.</p>
       </div>
     </div>

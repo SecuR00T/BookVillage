@@ -1,0 +1,28 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: book-village-backend
+    restart: unless-stopped
+    environment:
+        # AWS 운영 환경 프로파일 활성화
+      SPRING_PROFILES_ACTIVE: prod
+      SPRING_DATASOURCE_URL: jdbc:mysql://book-village-db.c7yyi6w0ch43.ap-northeast-2.rds.amazonaws.com:3306/book-village-db?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: admin_book
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-village123!}
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    volumes:
+      - backend-uploads:/app/uploads
+    networks:
+      - book-village-net
+
+volumes:
+  mysql-data:
+  backend-uploads:
+
+networks:
+  book-village-net:
+    name: book-village-net
+

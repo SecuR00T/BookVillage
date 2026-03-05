@@ -1,0 +1,13 @@
+package com.yes24.mock.dto;
+
+import lombok.Data;
+
+@Data
+public class RegisterRequest {
+    private String loginId;
+    private String email;
+    private String password;
+    private String name;
+    private String phone;
+    private String address;
+}

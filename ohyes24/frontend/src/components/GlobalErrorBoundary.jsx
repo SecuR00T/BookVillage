@@ -30,6 +30,7 @@ class GlobalErrorBoundary extends Component {
 
     this.handleWindowError = this.handleWindowError.bind(this);
     this.handleUnhandledRejection = this.handleUnhandledRejection.bind(this);
+    this.handleGlobalApiError = this.handleGlobalApiError.bind(this);
     this.handleReset = this.handleReset.bind(this);
   }
 
@@ -44,11 +45,13 @@ class GlobalErrorBoundary extends Component {
   componentDidMount() {
     window.addEventListener("error", this.handleWindowError);
     window.addEventListener("unhandledrejection", this.handleUnhandledRejection);
+    window.addEventListener("bookchon-global-error", this.handleGlobalApiError);
   }
 
   componentWillUnmount() {
     window.removeEventListener("error", this.handleWindowError);
     window.removeEventListener("unhandledrejection", this.handleUnhandledRejection);
+    window.removeEventListener("bookchon-global-error", this.handleGlobalApiError);
   }
 
   handleWindowError(event) {
@@ -67,6 +70,16 @@ class GlobalErrorBoundary extends Component {
       reason instanceof Error
         ? reason
         : new Error(typeof reason === "string" ? reason : DEFAULT_MESSAGE);
+    this.setState({ hasError: true, error });
+  }
+
+  handleGlobalApiError(event) {
+    if (this.state.hasError) return;
+    const message = event?.detail?.message || DEFAULT_MESSAGE;
+    const error = new Error(message);
+    if (typeof event?.detail?.status === "number") {
+      error.status = event.detail.status;
+    }
     this.setState({ hasError: true, error });
   }
 

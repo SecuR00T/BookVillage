@@ -16,20 +16,20 @@ export function AuthProvider({ children }) {
     return raw ? JSON.parse(raw) : null;
   });
 
-  const login = async (email, password) => {
-    const creds = btoa(unescape(encodeURIComponent(`${email}:${password}`)));
-    sessionStorage.setItem("bookchon_creds", creds);
-
+  const login = async (loginId, password) => {
     let me;
     try {
-      me = await api.auth.login({ email, password });
+      me = await api.auth.login({ loginId, password });
     } catch (err) {
       if (isUnauthorizedError(err)) {
-        throw new Error("이메일 또는 비밀번호를 다시 확인해 주세요.");
+        throw new Error("아이디 또는 비밀번호를 다시 확인해 주세요.");
       }
       throw err;
     }
 
+    const credsId = me?.email || loginId;
+    const creds = btoa(unescape(encodeURIComponent(`${credsId}:${password}`)));
+    sessionStorage.setItem("bookchon_creds", creds);
     sessionStorage.setItem("bookchon_user", JSON.stringify(me));
     setUser(me);
     notifyAuthChanged();
@@ -37,7 +37,7 @@ export function AuthProvider({ children }) {
 
   const register = async (payload) => {
     await api.auth.register(payload);
-    await login(payload.email, payload.password);
+    await login(payload.loginId || payload.email, payload.password);
   };
 
   const deleteAccount = async (password) => {

@@ -1,9 +1,9 @@
 -- Sample data for YES24 Mock (보안 교육용)
 -- schema.sql 실행 후 데이터베이스가 비어있는 경우에만 실행
 
-INSERT IGNORE INTO users (email, password, name, phone, address, role) VALUES
-('admin@yes24.mock', '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8', 'Admin', '010-0000-0000', 'Seoul', 'ADMIN'),
-('user@yes24.mock', '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8', 'Test User', '010-1234-5678', 'Seoul', 'USER');
+INSERT IGNORE INTO users (login_id, email, password, name, phone, address, role) VALUES
+('admin', 'admin@yes24.mock', '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8', 'Admin', '010-0000-0000', 'Seoul', 'ADMIN'),
+('user', 'user@yes24.mock', '5baa61e4c9b93f3f0682250b6cf8331b7ee68fd8', 'Test User', '010-1234-5678', 'Seoul', 'USER');
 -- password above is SHA1 of 'password'
 
 INSERT IGNORE INTO books (isbn, title, author, publisher, category, price, stock, description) VALUES

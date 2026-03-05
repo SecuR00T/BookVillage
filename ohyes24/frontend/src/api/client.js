@@ -1,5 +1,13 @@
 const API_BASE = "/api";
 const notifyAuthChanged = () => window.dispatchEvent(new Event("bookchon-auth-changed"));
+const emitGlobalError = (message, status = 0) => {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("bookchon-global-error", {
+      detail: { message, status },
+    }),
+  );
+};
 const decodeEscapedUnicode = (value) =>
   typeof value === "string"
     ? value.replace(/\\u([0-9a-fA-F]{4})/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)))
@@ -93,14 +101,21 @@ async function request(url, options = {}) {
 
   const hasBody = options.body !== undefined && options.body !== null;
   if (hasBody && !(options.body instanceof FormData)) {
-    headers["Content-Type"] = "application/json";
+    headers["Content-Type"] = "application/json; charset=UTF-8";
   }
 
   const method = (options.method || "GET").toUpperCase();
-  let res = await fetch(`${API_BASE}${url}`, { ...options, headers });
-  if (method === "GET" && TRANSIENT_STATUS.has(res.status)) {
-    await sleep(700);
+  let res;
+  try {
     res = await fetch(`${API_BASE}${url}`, { ...options, headers });
+    if (method === "GET" && TRANSIENT_STATUS.has(res.status)) {
+      await sleep(700);
+      res = await fetch(`${API_BASE}${url}`, { ...options, headers });
+    }
+  } catch (_networkError) {
+    const message = "네트워크 연결이 불안정합니다. 인터넷 상태를 확인해 주세요.";
+    emitGlobalError(message, 0);
+    throw new ApiError(message, { status: 0, retryable: true });
   }
 
   if (res.status === 401) {
@@ -112,6 +127,9 @@ async function request(url, options = {}) {
     const payload = await parseErrorPayload(res);
     const payloadMessage = extractMessageFromPayload(payload);
     const message = payloadMessage || statusMessage(res.status);
+    if (res.status >= 500) {
+      emitGlobalError(message, res.status);
+    }
     throw new ApiError(message, {
       status: res.status,
       details: payload,
@@ -227,7 +245,11 @@ export const api = {
         throw new ApiError(statusMessage(401), { status: 401 });
       }
       if (!res.ok) {
-        throw new ApiError("첨부파일 다운로드에 실패했습니다.", { status: res.status });
+        const message = "첨부파일 다운로드에 실패했습니다.";
+        if (res.status >= 500) {
+          emitGlobalError(message, res.status);
+        }
+        throw new ApiError(message, { status: res.status });
       }
 
       const blob = await res.blob();

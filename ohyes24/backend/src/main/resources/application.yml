@@ -36,6 +36,14 @@ server:
   port: 8080
   servlet:
     context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+      force-request: true
+      force-response: true
+  tomcat:
+    uri-encoding: UTF-8
 
 # Local file storage for receipts (Path Traversal vulnerability context)
 file:

@@ -34,16 +34,12 @@ pnpm-debug.log*
 local.properties
 
 # Project-specific generated artifacts
-bookvillage/.git_inner_backup/
-bookvillage/BOOT-INF/
-bookvillage/backend/app-from-container.jar
-bookvillage/temp_bundle.js
-bookvillage/temp_bundle_new.js
-bookvillage/temp_index.html
-bookvillage/frontend/live-index*.js
-bookvillage/frontend/live-index.html
-bookvillage/frontend/dist-*.js
-docker-compose.integration.yml
-docker-compose.integration.yml
-docker-compose.integration.yml
-bookvillage/docker-compose.integration.yml
+ohyes24/.git_inner_backup/
+ohyes24/BOOT-INF/
+ohyes24/backend/app-from-container.jar
+ohyes24/temp_bundle.js
+ohyes24/temp_bundle_new.js
+ohyes24/temp_index.html
+ohyes24/frontend/live-index*.js
+ohyes24/frontend/live-index.html
+ohyes24/frontend/dist-*.js

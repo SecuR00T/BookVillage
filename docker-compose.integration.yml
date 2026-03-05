@@ -19,7 +19,7 @@ services:
 
   yes24-backend:
     build:
-      context: ./ohyes24/backend
+      context: ./bookvillage/backend
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:
@@ -38,7 +38,7 @@ services:
 
   yes24-frontend:
     build:
-      context: ./ohyes24/frontend
+      context: ./bookvillage/frontend
       dockerfile: Dockerfile
     restart: unless-stopped
     depends_on:

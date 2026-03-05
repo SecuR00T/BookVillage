@@ -1,0 +1,107 @@
+package com.yes24.mock.controller.mypage;
+
+import com.yes24.mock.dto.reviews.MyReviewDto;
+import com.yes24.mock.dto.reviews.ReviewDto;
+import com.yes24.mock.dto.reviews.ReviewRequest;
+import com.yes24.mock.security.users.UserPrincipal;
+import com.yes24.mock.service.labs.LearningFeatureService;
+import com.yes24.mock.service.reviews.ReviewService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+
+@RestController
+@RequestMapping("/api/mypage")
+@RequiredArgsConstructor
+public class MypageController {
+
+    private final LearningFeatureService learningFeatureService;
+    private final ReviewService reviewService;
+
+    @GetMapping("/recent-views")
+    public ResponseEntity<List<Map<String, Object>>> recentViews(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(learningFeatureService.getRecentViews(principal.getUserId()));
+    }
+
+    @GetMapping("/wishlist")
+    public ResponseEntity<List<Map<String, Object>>> wishlist(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(learningFeatureService.getWishlist(principal.getUserId()));
+    }
+
+    @PostMapping("/wishlist")
+    public ResponseEntity<Void> addWishlist(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestBody Map<String, Object> request) {
+        Long bookId = request.get("bookId") == null ? null : Long.valueOf(String.valueOf(request.get("bookId")));
+        learningFeatureService.addWishlist(principal.getUserId(), bookId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/wishlist/{wishlistId}")
+    public ResponseEntity<Void> deleteWishlist(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long wishlistId) {
+        learningFeatureService.deleteWishlist(principal.getUserId(), wishlistId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/wallet")
+    public ResponseEntity<Map<String, Object>> wallet(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(learningFeatureService.getWallet(principal.getUserId()));
+    }
+
+    @GetMapping("/summary")
+    public ResponseEntity<Map<String, Object>> summary(@AuthenticationPrincipal UserPrincipal principal) {
+        return ResponseEntity.ok(learningFeatureService.getMypageSummary(principal.getUserId()));
+    }
+
+    @PostMapping("/orders/{orderId}/cancel")
+    public ResponseEntity<Void> cancelOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestBody(required = false) Map<String, String> request) {
+        String reason = request != null ? request.get("reason") : null;
+        learningFeatureService.requestOrderCancel(principal.getUserId(), orderId, reason);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping("/orders/{orderId}/return")
+    public ResponseEntity<Void> returnOrder(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long orderId,
+            @RequestBody(required = false) Map<String, String> request) {
+        String reason = request != null ? request.get("reason") : null;
+        String proofFileName = request != null ? request.get("proofFileName") : null;
+        learningFeatureService.requestOrderReturn(principal.getUserId(), orderId, reason, proofFileName);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/favorite-posts")
+    public ResponseEntity<List<Map<String, Object>>> favoritePosts(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestParam(defaultValue = "false") boolean includePrivate) {
+        return ResponseEntity.ok(learningFeatureService.getFavoritePosts(principal.getUserId(), includePrivate));
+    }
+
+    @DeleteMapping("/favorite-posts/{postId}")
+    public ResponseEntity<Void> deleteFavoritePost(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long postId) {
+        learningFeatureService.deleteFavoritePost(principal.getUserId(), postId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/reviews/{reviewId}")
+    public ResponseEntity<Void> deleteReview(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long reviewId,
+            @RequestHeader(value = "X-LAB-CSRF-TOKEN", required = false) String csrfToken) {
+        reviewService.deleteMyReview(principal.getUserId(), reviewId, csrfToken);
+        return ResponseEntity.noContent().build();
+    }
+}
+

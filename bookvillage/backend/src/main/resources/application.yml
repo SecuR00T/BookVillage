@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: bookvillage-mock
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3407/bookvillage_mock?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:root}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    open-in-view: false
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+    locations: classpath:db/migration
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+
+# Local file storage for receipts (Path Traversal vulnerability context)
+file:
+  storage-path: ./uploads/receipts
+  base-path: ./uploads
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+

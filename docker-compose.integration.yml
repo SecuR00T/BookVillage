@@ -1,75 +1,79 @@
 services:
   db:
     image: mysql:8.4
+    container_name: book-village-db
     restart: unless-stopped
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
-      MYSQL_DATABASE: ${MYSQL_DATABASE:-yes24_mock}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-bookvillage_mock}
     ports:
-      - "${MYSQL_PORT:-3407}:3306"
+      - "${MYSQL_PORT:-3417}:3306"
     volumes:
-      - shared-mysql-data:/var/lib/mysql
+      - mysql-data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p${MYSQL_ROOT_PASSWORD:-1234}"]
       interval: 10s
       timeout: 5s
       retries: 12
     networks:
-      - shared-net
+      - book-village-net
 
-  yes24-backend:
+  book-village-backend:
     build:
-      context: ./ohyes24/backend
+      context: ./bookvillage/backend
       dockerfile: Dockerfile
+    container_name: book-village-backend
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-yes24_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-bookvillage_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
     ports:
-      - "${SHOP_BACKEND_PORT:-8080}:8080"
+      - "${BACKEND_PORT:-19080}:8080"
     volumes:
-      - shared-backend-uploads:/app/uploads
+      - backend-uploads:/app/uploads
     networks:
-      - shared-net
+      - book-village-net
 
-  yes24-frontend:
+  book-village-frontend:
     build:
-      context: ./ohyes24/frontend
+      context: ./bookvillage/frontend
       dockerfile: Dockerfile
+    container_name: book-village-frontend
     restart: unless-stopped
     depends_on:
-      - yes24-backend
+      - book-village-backend
     ports:
-      - "${SHOP_FRONTEND_PORT:-8081}:80"
+      - "${FRONTEND_PORT:-19081}:80"
     networks:
-      - shared-net
-
+      - book-village-net
 
   admin-backend:
     build:
-      context: ../2.25_admin/admin/backend
+      context: ../../2.25_admin/admin/backend
       dockerfile: Dockerfile
+    container_name: bookvillage-admin-backend
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-yes24_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/${MYSQL_DATABASE:-bookvillage_mock}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
       SPRING_DATASOURCE_USERNAME: root
       SPRING_DATASOURCE_PASSWORD: ${MYSQL_ROOT_PASSWORD:-1234}
     ports:
       - "${ADMIN_BACKEND_PORT:-18081}:18081"
     networks:
-      - shared-net
+      - book-village-net
 
   admin-frontend:
     build:
-      context: ../2.25_admin/admin
-      dockerfile: Dockerfile.frontend
+      context: ../../2.25_admin/admin/frontend
+      dockerfile: Dockerfile
+    container_name: bookvillage-admin-frontend
     restart: unless-stopped
     depends_on:
       - admin-backend
@@ -80,12 +84,12 @@ services:
     ports:
       - "${ADMIN_FRONTEND_PORT:-18080}:80"
     networks:
-      - shared-net
+      - book-village-net
 
 volumes:
-  shared-mysql-data:
-  shared-backend-uploads:
+  mysql-data:
+  backend-uploads:
 
 networks:
-  shared-net:
-    name: shared-net
+  book-village-net:
+    name: book-village-net

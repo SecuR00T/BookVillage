@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -127,7 +128,7 @@ public class OrderService {
         }
 
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(
-                "SELECT id, discount_type, discount_value, remaining_count FROM coupons WHERE code = ?",
+                "SELECT id, discount_type, discount_value, remaining_count, target_grade FROM coupons WHERE code = ?",
                 couponCode.trim()
         );
         if (rows.isEmpty()) {
@@ -135,14 +136,9 @@ public class OrderService {
         }
 
         Map<String, Object> coupon = rows.get(0);
-        int remaining = ((Number) coupon.get("remaining_count")).intValue();
-        if (remaining <= 0) {
-            securityLabService.simulate("REQ-COM-019", userId, "/api/orders/checkout", couponCode);
-            return BigDecimal.ZERO;
-        }
-
         BigDecimal discountValue = (BigDecimal) coupon.get("discount_value");
         String type = (String) coupon.get("discount_type");
+        String targetGrade = Objects.toString(coupon.get("target_grade"), "ALL").trim().toUpperCase(Locale.ROOT);
         BigDecimal discount;
         if ("PERCENT".equalsIgnoreCase(type)) {
             discount = total.multiply(discountValue).divide(BigDecimal.valueOf(100));
@@ -154,7 +150,44 @@ public class OrderService {
             discount = total;
         }
 
-        jdbcTemplate.update("UPDATE coupons SET remaining_count = remaining_count - 1 WHERE id = ?", ((Number) coupon.get("id")).longValue());
+        Long couponId = ((Number) coupon.get("id")).longValue();
+        if (!"ALL".equals(targetGrade)) {
+            String userGrade = jdbcTemplate.queryForObject(
+                    "SELECT membership_grade FROM users WHERE id = ?",
+                    String.class,
+                    userId
+            );
+            if (userGrade == null || !targetGrade.equalsIgnoreCase(userGrade.trim())) {
+                return BigDecimal.ZERO;
+            }
+
+            List<Map<String, Object>> issueRows = jdbcTemplate.queryForList(
+                    "SELECT id FROM user_coupon_issues WHERE coupon_id = ? AND user_id = ? AND used_at IS NULL ORDER BY issued_at ASC LIMIT 1",
+                    couponId,
+                    userId
+            );
+            if (issueRows.isEmpty()) {
+                return BigDecimal.ZERO;
+            }
+            Long issueId = ((Number) issueRows.get(0).get("id")).longValue();
+            int updated = jdbcTemplate.update(
+                    "UPDATE user_coupon_issues SET used_at = NOW() WHERE id = ? AND used_at IS NULL",
+                    issueId
+            );
+            if (updated == 0) {
+                return BigDecimal.ZERO;
+            }
+            return discount;
+        }
+
+        int updated = jdbcTemplate.update(
+                "UPDATE coupons SET remaining_count = remaining_count - 1 WHERE id = ? AND remaining_count > 0",
+                couponId
+        );
+        if (updated == 0) {
+            securityLabService.simulate("REQ-COM-019", userId, "/api/orders/checkout", couponCode);
+            return BigDecimal.ZERO;
+        }
         return discount;
     }
 

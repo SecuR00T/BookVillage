@@ -19,6 +19,9 @@ public class User {
     @Column(nullable = false, unique = true)
     private String email;
 
+    @Column(length = 50)
+    private String username;
+
     @Column(nullable = false, length = 64)
     private String password;
 
@@ -36,6 +39,9 @@ public class User {
 
     @Column(nullable = false, length = 20)
     private String status = "ACTIVE";
+
+    @Column(name = "membership_grade", nullable = false, length = 20)
+    private String membershipGrade = "BRONZE";
 
     private LocalDateTime suspendedUntil;
 

@@ -236,8 +236,13 @@ public class LearningFeatureService {
                 userId
         );
         List<Map<String, Object>> coupons = jdbcTemplate.queryForList(
-                "SELECT code, discount_type AS discountType, discount_value AS discountValue, remaining_count AS remainingCount " +
-                        "FROM coupons ORDER BY id ASC"
+                "SELECT c.code, c.discount_type AS discountType, c.discount_value AS discountValue, c.target_grade AS targetGrade, " +
+                        "CASE WHEN c.target_grade = 'ALL' THEN c.remaining_count ELSE CASE WHEN uci.used_at IS NULL THEN 1 ELSE 0 END END AS remainingCount " +
+                        "FROM coupons c " +
+                        "LEFT JOIN user_coupon_issues uci ON uci.coupon_id = c.id AND uci.user_id = ? " +
+                        "WHERE c.target_grade = 'ALL' OR uci.id IS NOT NULL " +
+                        "ORDER BY c.id ASC",
+                userId
         );
 
         Map<String, Object> data = new LinkedHashMap<>();
@@ -269,8 +274,15 @@ public class LearningFeatureService {
                 userId
         );
         Integer couponCount = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM coupons WHERE remaining_count > 0",
+                "SELECT COUNT(*) FROM (" +
+                        "SELECT c.id FROM coupons c WHERE c.target_grade = 'ALL' AND c.remaining_count > 0 " +
+                        "UNION ALL " +
+                        "SELECT c.id FROM coupons c JOIN user_coupon_issues uci ON uci.coupon_id = c.id " +
+                        "WHERE uci.user_id = ? AND uci.used_at IS NULL" +
+                        ") t",
                 Integer.class
+                ,
+                userId
         );
 
         Map<String, Object> summary = new LinkedHashMap<>();

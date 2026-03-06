@@ -27,7 +27,7 @@ const TEXT = {
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -44,7 +44,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     try {
-      await login(email, password);
+      await login(identifier, password);
       navigate("/");
     } catch (err) {
       setError(toKoreanLoginError(err instanceof Error ? err.message : ""));
@@ -89,11 +89,11 @@ export default function Login() {
 
           <form onSubmit={submit} className="mt-6 space-y-3">
             <input
-              type="email"
+              type="text"
               className="w-full rounded-xl border border-input bg-background px-4 py-3 text-base outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary/15"
-              placeholder={TEXT.email}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              placeholder="아이디 또는 이메일"
+              value={identifier}
+              onChange={(e) => setIdentifier(e.target.value)}
             />
             <input
               type="password"

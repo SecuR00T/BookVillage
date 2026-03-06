@@ -29,6 +29,9 @@ public class Coupon {
     @Column(name = "remaining_count")
     private Integer remainingCount = 1;
 
+    @Column(name = "target_grade", nullable = false, length = 20)
+    private String targetGrade = "ALL";
+
     @Column(name = "valid_from")
     private LocalDateTime validFrom;
 

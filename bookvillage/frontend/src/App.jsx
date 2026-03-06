@@ -69,6 +69,7 @@ export default function App() {
               <Route path="/board/:postId" element={<PrivateRoute><BoardDetail /></PrivateRoute>} />
               <Route path="/board/:postId/edit" element={<PrivateRoute><BoardWrite /></PrivateRoute>} />
               <Route path="/admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
+              <Route path="/2.25_admin" element={<PrivateRoute><Admin /></PrivateRoute>} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

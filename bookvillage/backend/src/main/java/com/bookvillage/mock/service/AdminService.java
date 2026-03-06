@@ -11,13 +11,17 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class AdminService {
+    private static final Set<String> MEMBERSHIP_GRADES = Set.of("BRONZE", "SILVER", "GOLD", "VIP");
 
     private final UserRepository userRepository;
     private final BookRepository bookRepository;
@@ -79,6 +83,14 @@ public class AdminService {
     }
 
     public Coupon createCoupon(Coupon coupon) {
+        if (coupon.getRemainingCount() == null || coupon.getRemainingCount() < 0) {
+            throw new IllegalArgumentException("remainingCount must be >= 0");
+        }
+        String targetGrade = normalizeTargetGrade(coupon.getTargetGrade());
+        if (!"ALL".equals(targetGrade) && !MEMBERSHIP_GRADES.contains(targetGrade)) {
+            throw new IllegalArgumentException("targetGrade must be one of ALL/BRONZE/SILVER/GOLD/VIP");
+        }
+        coupon.setTargetGrade(targetGrade);
         return couponRepository.save(coupon);
     }
 
@@ -118,7 +130,7 @@ public class AdminService {
     }
 
     @Transactional
-    public UserDto updateUserStatus(Long userId, String status, String role) {
+    public UserDto updateUserStatus(Long userId, String status, String role, String membershipGrade) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("User not found"));
         if (status != null && !status.trim().isEmpty()) {
@@ -127,7 +139,97 @@ public class AdminService {
         if (role != null && !role.trim().isEmpty()) {
             user.setRole(role.trim().toUpperCase(Locale.ROOT));
         }
+        if (membershipGrade != null && !membershipGrade.trim().isEmpty()) {
+            String normalized = membershipGrade.trim().toUpperCase(Locale.ROOT);
+            if (!MEMBERSHIP_GRADES.contains(normalized)) {
+                throw new IllegalArgumentException("membershipGrade must be one of BRONZE/SILVER/GOLD/VIP");
+            }
+            user.setMembershipGrade(normalized);
+        }
         return UserDto.from(userRepository.save(user));
+    }
+
+    @Transactional
+    public Map<String, Object> issueCouponByGrade(Long couponId, String grade) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new IllegalArgumentException("Coupon not found"));
+
+        int currentRemaining = coupon.getRemainingCount() == null ? 0 : coupon.getRemainingCount();
+        if (currentRemaining <= 0) {
+            throw new IllegalArgumentException("Coupon is out of stock (remainingCount=0)");
+        }
+
+        String issueGrade = normalizeIssueGrade(grade, coupon.getTargetGrade());
+        if (!MEMBERSHIP_GRADES.contains(issueGrade)) {
+            throw new IllegalArgumentException("grade must be one of BRONZE/SILVER/GOLD/VIP");
+        }
+
+        if ("ALL".equals(normalizeTargetGrade(coupon.getTargetGrade()))) {
+            coupon.setTargetGrade(issueGrade);
+        } else if (!issueGrade.equals(normalizeTargetGrade(coupon.getTargetGrade()))) {
+            throw new IllegalArgumentException("Coupon targetGrade does not match requested grade");
+        }
+
+        List<Long> userIds = jdbcTemplate.queryForList(
+                "SELECT id FROM users WHERE membership_grade = ? ORDER BY id ASC",
+                Long.class,
+                issueGrade
+        );
+
+        int issuedCount = 0;
+        int skippedCount = 0;
+        int remaining = currentRemaining;
+
+        for (Long userId : userIds) {
+            if (remaining <= 0) {
+                break;
+            }
+            Integer exists = jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM user_coupon_issues WHERE coupon_id = ? AND user_id = ?",
+                    Integer.class,
+                    couponId,
+                    userId
+            );
+            if (exists != null && exists > 0) {
+                skippedCount++;
+                continue;
+            }
+
+            jdbcTemplate.update(
+                    "INSERT INTO user_coupon_issues (coupon_id, user_id, issued_at) VALUES (?, ?, NOW())",
+                    couponId,
+                    userId
+            );
+            issuedCount++;
+            remaining--;
+        }
+
+        coupon.setRemainingCount(remaining);
+        couponRepository.save(coupon);
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("couponId", couponId);
+        result.put("couponCode", coupon.getCode());
+        result.put("issuedGrade", issueGrade);
+        result.put("issuedCount", issuedCount);
+        result.put("skippedAlreadyIssued", skippedCount);
+        result.put("remainingCount", remaining);
+        result.put("outOfStock", remaining == 0);
+        return result;
+    }
+
+    private String normalizeTargetGrade(String targetGrade) {
+        if (targetGrade == null || targetGrade.trim().isEmpty()) {
+            return "ALL";
+        }
+        return targetGrade.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String normalizeIssueGrade(String requestedGrade, String couponTargetGrade) {
+        if (requestedGrade != null && !requestedGrade.trim().isEmpty()) {
+            return requestedGrade.trim().toUpperCase(Locale.ROOT);
+        }
+        return normalizeTargetGrade(couponTargetGrade);
     }
 
     public List<BookDto> getStockByFilter(String author, String isbn) {

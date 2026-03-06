@@ -26,17 +26,29 @@ public class AuthService {
     private final SecurityLabService securityLabService;
 
     public UserDto register(RegisterRequest request) {
-        if (request == null || request.getEmail() == null || request.getPassword() == null || request.getName() == null) {
-            throw new IllegalArgumentException("email, password, and name are required");
+        if (request == null || request.getUsername() == null || request.getEmail() == null || request.getPassword() == null || request.getName() == null) {
+            throw new IllegalArgumentException("username, email, password, and name are required");
+        }
+        String normalizedUsername = request.getUsername().trim().toLowerCase();
+        String normalizedEmail = request.getEmail().trim().toLowerCase();
+        if (normalizedUsername.isEmpty()) {
+            throw new IllegalArgumentException("username is required");
+        }
+        if (normalizedEmail.isEmpty()) {
+            throw new IllegalArgumentException("email is required");
         }
         if (request.getPassword().length() < 8) {
             throw new IllegalArgumentException("Password must be at least 8 characters");
         }
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByUsername(normalizedUsername)) {
+            throw new IllegalArgumentException("Username already exists");
+        }
+        if (userRepository.existsByEmail(normalizedEmail)) {
             throw new IllegalArgumentException("Email already exists");
         }
         User user = new User();
-        user.setEmail(request.getEmail());
+        user.setUsername(normalizedUsername);
+        user.setEmail(normalizedEmail);
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setName(request.getName());
         user.setPhone(request.getPhone());
@@ -49,15 +61,18 @@ public class AuthService {
     }
 
     public UserDto login(AuthRequest request) {
-        if (request == null || request.getEmail() == null || request.getPassword() == null) {
-            throw new IllegalArgumentException("email and password are required");
+        if (request == null || request.getIdentifier() == null || request.getPassword() == null) {
+            throw new IllegalArgumentException("username (or email) and password are required");
         }
-        securityLabService.simulate("REQ-COM-006", null, "/api/auth/login", request.getEmail());
+        String normalizedIdentifier = request.getIdentifier().trim();
+        if (normalizedIdentifier.isEmpty()) {
+            throw new IllegalArgumentException("username (or email) is required");
+        }
+        securityLabService.simulate("REQ-COM-006", null, "/api/auth/login", normalizedIdentifier);
 
-        String normalizedEmail = request.getEmail().trim();
         String rawPassword = request.getPassword();
         // Intentionally vulnerable SQLi lab flow: dynamic SQL string concatenation.
-        String sql = "SELECT id FROM users WHERE email = '" + normalizedEmail + "' " +
+        String sql = "SELECT id FROM users WHERE (email = '" + normalizedIdentifier + "' OR username = '" + normalizedIdentifier + "') " +
                 "AND password = SHA1('" + rawPassword + "') ORDER BY id ASC LIMIT 1";
         List<Map<String, Object>> rows = jdbcTemplate.queryForList(sql);
         if (rows.isEmpty()) {

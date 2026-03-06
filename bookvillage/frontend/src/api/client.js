@@ -293,9 +293,18 @@ export const api = {
     getOrders: () => request("/admin/orders"),
     updateOrderStatus: (orderId, status) => request(`/admin/orders/${orderId}/status`, { method: "PUT", body: JSON.stringify({ status }) }),
     getUsers: () => request("/admin/users"),
-    updateUserStatus: (userId, status, role) => request(`/admin/users/${userId}/status`, { method: "PUT", body: JSON.stringify({ status, role }) }),
+    updateUserStatus: (userId, status, role, membershipGrade) =>
+      request(`/admin/users/${userId}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status, role, ...(membershipGrade ? { membershipGrade } : {}) }),
+      }),
     getCoupons: () => request("/admin/coupons"),
     createCoupon: (data) => request("/admin/coupons", { method: "POST", body: JSON.stringify(data) }),
+    issueCouponByGrade: (couponId, grade) =>
+      request(`/admin/coupons/${couponId}/issue-by-grade`, {
+        method: "POST",
+        body: JSON.stringify({ grade }),
+      }),
     getCustomerService: () => request("/admin/customer-service"),
     replyCustomerService: (inquiryId, answer) => request(`/admin/customer-service/${inquiryId}/reply`, { method: "POST", body: JSON.stringify({ answer }) }),
     getLogs: () => request("/admin/logs"),

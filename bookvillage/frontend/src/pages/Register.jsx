@@ -47,6 +47,7 @@ export default function Register() {
   const { register } = useAuth();
   const navigate = useNavigate();
   const [form, setForm] = useState({
+    username: "",
     email: "",
     password: "",
     passwordConfirm: "",
@@ -143,6 +144,7 @@ export default function Register() {
 
     try {
       await register({
+        username: form.username,
         email: form.email,
         password: form.password,
         name: fullName,
@@ -256,6 +258,12 @@ export default function Register() {
               />
             </div>
 
+            <input
+              className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
+              placeholder="아이디"
+              value={form.username}
+              onChange={(e) => setForm((prev) => ({ ...prev, username: e.target.value }))}
+            />
             <input
               className="w-full rounded-md border border-transparent bg-secondary/35 px-4 py-3 text-base focus:border-primary focus:bg-card focus:outline-none"
               placeholder={TEXT.email}

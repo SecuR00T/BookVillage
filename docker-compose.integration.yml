@@ -42,7 +42,7 @@ services:
     build:
       context: ./bookvillage/frontend
       dockerfile: Dockerfile
-    container_name: book-village-frontend
+    container_name: book-village-frontend-integration
     restart: unless-stopped
     depends_on:
       - book-village-backend

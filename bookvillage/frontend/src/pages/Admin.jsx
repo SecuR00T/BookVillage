@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+﻿import { useEffect, useMemo, useState } from "react";
 import { api } from "@/api/client";
 import { useAuth } from "@/context/AuthContext";
 import PageLayout from "@/components/PageLayout";
+
+const MEMBERSHIP_GRADES = ["BRONZE", "SILVER", "GOLD", "VIP"];
 
 const formatDateTime = (value) => {
   if (!value) return "-";
@@ -18,10 +20,12 @@ export default function Admin() {
   const [orders, setOrders] = useState([]);
   const [users, setUsers] = useState([]);
   const [inquiries, setInquiries] = useState([]);
+  const [coupons, setCoupons] = useState([]);
 
   const [noticeForm, setNoticeForm] = useState({ title: "", content: "" });
   const [userControls, setUserControls] = useState({});
   const [replyDrafts, setReplyDrafts] = useState({});
+  const [couponIssueGrades, setCouponIssueGrades] = useState({});
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -31,22 +35,25 @@ export default function Admin() {
     setLoading(true);
     setError("");
     try {
-      const [d, b, o, u, c] = await Promise.all([
+      const [d, b, o, u, c, cp] = await Promise.all([
         api.admin.dashboard(),
         api.admin.getBooks(),
         api.admin.getOrders(),
         api.admin.getUsers(),
         api.admin.getCustomerService(),
+        api.admin.getCoupons(),
       ]);
 
       const userRows = u || [];
       const inquiryRows = c || [];
+      const couponRows = cp || [];
 
       setDashboard(d || null);
       setBooks(b || []);
       setOrders(o || []);
       setUsers(userRows);
       setInquiries(inquiryRows);
+      setCoupons(couponRows);
 
       setUserControls((prev) => {
         const next = {};
@@ -55,6 +62,7 @@ export default function Admin() {
           next[row.id] = {
             status: existing.status || row.status || "ACTIVE",
             role: existing.role || row.role || "USER",
+            membershipGrade: existing.membershipGrade || row.membershipGrade || "BRONZE",
           };
         });
         return next;
@@ -67,8 +75,17 @@ export default function Admin() {
         });
         return next;
       });
+
+      setCouponIssueGrades((prev) => {
+        const next = {};
+        couponRows.forEach((row) => {
+          const target = String(row.targetGrade || "ALL").toUpperCase();
+          next[row.id] = prev[row.id] || (target === "ALL" ? "BRONZE" : target);
+        });
+        return next;
+      });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "������ �����͸� �ҷ����� ���߽��ϴ�.");
+      setError(err instanceof Error ? err.message : "데이터를 불러오지 못했습니다.");
     } finally {
       setLoading(false);
     }
@@ -79,28 +96,28 @@ export default function Admin() {
     load();
   }, [isAdmin]);
 
-  if (!isAdmin) {
-    return (
-      <PageLayout title="������" description="������ ���� ����Դϴ�.">
-        <p className="text-muted-foreground">������ ������ �ʿ��մϴ�.</p>
-      </PageLayout>
-    );
-  }
-
   const openInquiryCount = useMemo(
     () => inquiries.filter((v) => String(v.status || "").toUpperCase() === "OPEN").length,
     [inquiries],
   );
+
+  if (!isAdmin) {
+    return (
+      <PageLayout title="관리자" description="관리자 권한이 필요합니다.">
+        <p className="text-muted-foreground">관리자 권한이 없습니다.</p>
+      </PageLayout>
+    );
+  }
 
   const changeOrderStatus = async (orderId, status) => {
     setError("");
     setMessage("");
     try {
       await api.admin.updateOrderStatus(orderId, status);
-      setMessage("�ֹ� ���¸� �����߽��ϴ�.");
+      setMessage("주문 상태를 변경했습니다.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "�ֹ� ���� ���濡 �����߽��ϴ�.");
+      setError(err instanceof Error ? err.message : "주문 상태 변경에 실패했습니다.");
     }
   };
 
@@ -110,6 +127,7 @@ export default function Admin() {
       [userId]: {
         status: prev[userId]?.status || "ACTIVE",
         role: prev[userId]?.role || "USER",
+        membershipGrade: prev[userId]?.membershipGrade || "BRONZE",
         [key]: value,
       },
     }));
@@ -120,11 +138,11 @@ export default function Admin() {
     setError("");
     setMessage("");
     try {
-      await api.admin.updateUserStatus(userId, control.status, control.role);
-      setMessage("ȸ�� ����/������ �����߽��ϴ�.");
+      await api.admin.updateUserStatus(userId, control.status, control.role, control.membershipGrade);
+      setMessage("회원 정보를 변경했습니다.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "ȸ�� ����/���� ���濡 �����߽��ϴ�.");
+      setError(err instanceof Error ? err.message : "회원 정보 변경에 실패했습니다.");
     }
   };
 
@@ -135,16 +153,16 @@ export default function Admin() {
     try {
       await api.admin.createNotice(noticeForm.title.trim(), noticeForm.content.trim());
       setNoticeForm({ title: "", content: "" });
-      setMessage("���������� ��ϵǾ����ϴ�.");
+      setMessage("공지 등록이 완료되었습니다.");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "���� ��Ͽ� �����߽��ϴ�.");
+      setError(err instanceof Error ? err.message : "공지 등록에 실패했습니다.");
     }
   };
 
   const replyInquiry = async (inquiryId) => {
     const answer = String(replyDrafts[inquiryId] || "").trim();
     if (!answer) {
-      setError("�亯 ������ �Է��� �ּ���.");
+      setError("답변 내용을 입력해 주세요.");
       return;
     }
 
@@ -152,26 +170,55 @@ export default function Admin() {
     setMessage("");
     try {
       await api.admin.replyCustomerService(inquiryId, answer);
-      setMessage("���� �亯�� ����Ǿ����ϴ�.");
+      setMessage("문의 답변을 등록했습니다.");
       await load();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "���� �亯 ���忡 �����߽��ϴ�.");
+      setError(err instanceof Error ? err.message : "문의 답변 등록에 실패했습니다.");
+    }
+  };
+
+  const issueCouponByGrade = async (couponId) => {
+    const grade = couponIssueGrades[couponId] || "BRONZE";
+    setError("");
+    setMessage("");
+    try {
+      const result = await api.admin.issueCouponByGrade(couponId, grade);
+      setMessage(
+        `쿠폰 발급 완료: 등급=${result?.issuedGrade || grade}, 발급=${Number(result?.issuedCount || 0)}건, 잔여=${Number(result?.remainingCount || 0)}개`,
+      );
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "쿠폰 발급에 실패했습니다.");
     }
   };
 
   return (
-    <PageLayout title="������" description="ȸ��/�ֹ�/����/���� � ���">
+    <PageLayout title="관리자" description="회원/주문/문의/쿠폰 발급/공지 관리">
       {dashboard && (
         <section className="mb-4 grid gap-2 rounded-xl border bg-card p-4 text-sm md:grid-cols-5">
-          <div>ȸ��: <strong>{dashboard.totalUsers}</strong></div>
-          <div>����: <strong>{dashboard.totalBooks}</strong></div>
-          <div>�ֹ�: <strong>{dashboard.totalOrders}</strong></div>
-          <div>�̴亯 ����: <strong>{openInquiryCount}</strong></div>
-          <div>���� �̺�Ʈ: <strong>{dashboard.securityEvents}</strong></div>
+          <div>
+            회원: <strong>{dashboard.totalUsers}</strong>
+          </div>
+          <div>
+            도서: <strong>{dashboard.totalBooks}</strong>
+          </div>
+          <div>
+            주문: <strong>{dashboard.totalOrders}</strong>
+          </div>
+          <div>
+            미답변 문의: <strong>{openInquiryCount}</strong>
+          </div>
+          <div>
+            보안 이벤트: <strong>{dashboard.securityEvents}</strong>
+          </div>
         </section>
       )}
 
-      {loading && <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">������ �����͸� �ҷ����� ���Դϴ�.</p>}
+      {loading && (
+        <p className="rounded-xl border border-border bg-card px-4 py-3 text-sm text-muted-foreground">
+          데이터를 불러오는 중입니다.
+        </p>
+      )}
       {error && <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
       {message && <p className="mb-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{message}</p>}
 
@@ -179,12 +226,14 @@ export default function Admin() {
         <>
           <div className="grid gap-4 lg:grid-cols-2">
             <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 font-bold">�ֹ� ����</h2>
+              <h2 className="mb-2 font-bold">주문 상태 관리</h2>
               <div className="max-h-96 space-y-2 overflow-auto">
                 {orders.map((o) => (
                   <div key={o.id} className="rounded border p-2 text-sm">
                     <p className="font-semibold">{o.orderNumber}</p>
-                    <p className="text-xs text-muted-foreground">����: {o.status} | �ݾ�: {Number(o.totalAmount || 0).toLocaleString("ko-KR")} KRW</p>
+                    <p className="text-xs text-muted-foreground">
+                      상태: {o.status} | 금액: {Number(o.totalAmount || 0).toLocaleString("ko-KR")} KRW
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {["PENDING", "PAID", "SHIPPED", "DELIVERED", "CANCELLED", "RETURN_REQUESTED", "EXCHANGE_REQUESTED"].map((status) => (
                         <button
@@ -198,20 +247,28 @@ export default function Admin() {
                     </div>
                   </div>
                 ))}
-                {orders.length === 0 && <p className="text-sm text-muted-foreground">�ֹ� �����Ͱ� �����ϴ�.</p>}
+                {orders.length === 0 && <p className="text-sm text-muted-foreground">주문 데이터가 없습니다.</p>}
               </div>
             </section>
 
             <section className="rounded-xl border bg-card p-4">
-              <h2 className="mb-2 font-bold">ȸ�� ���� ����</h2>
+              <h2 className="mb-2 font-bold">회원 상태/권한/등급</h2>
               <div className="max-h-96 space-y-2 overflow-auto">
                 {users.map((u) => {
-                  const control = userControls[u.id] || { status: u.status || "ACTIVE", role: u.role || "USER" };
+                  const control = userControls[u.id] || {
+                    status: u.status || "ACTIVE",
+                    role: u.role || "USER",
+                    membershipGrade: u.membershipGrade || "BRONZE",
+                  };
                   return (
                     <div key={u.id} className="rounded border p-2 text-sm">
-                      <p className="font-semibold">#{u.id} {u.email}</p>
-                      <p className="text-xs text-muted-foreground">���� ����: {u.status} | ���� ����: {u.role}</p>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_auto]">
+                      <p className="font-semibold">
+                        #{u.id} {u.email}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        상태: {u.status} | 권한: {u.role} | 등급: {u.membershipGrade || "BRONZE"}
+                      </p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto]">
                         <select
                           className="rounded border border-input bg-background px-2 py-1.5 text-xs"
                           value={control.status}
@@ -229,72 +286,139 @@ export default function Admin() {
                           <option value="USER">USER</option>
                           <option value="ADMIN">ADMIN</option>
                         </select>
+                        <select
+                          className="rounded border border-input bg-background px-2 py-1.5 text-xs"
+                          value={control.membershipGrade}
+                          onChange={(e) => changeUserControl(u.id, "membershipGrade", e.target.value)}
+                        >
+                          {MEMBERSHIP_GRADES.map((grade) => (
+                            <option key={grade} value={grade}>
+                              {grade}
+                            </option>
+                          ))}
+                        </select>
                         <button
                           type="button"
                           onClick={() => applyUserControl(u.id)}
                           className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                         >
-                          ����
+                          적용
                         </button>
                       </div>
                     </div>
                   );
                 })}
-                {users.length === 0 && <p className="text-sm text-muted-foreground">ȸ�� �����Ͱ� �����ϴ�.</p>}
+                {users.length === 0 && <p className="text-sm text-muted-foreground">회원 데이터가 없습니다.</p>}
               </div>
             </section>
           </div>
 
           <section className="mt-4 rounded-xl border bg-card p-4">
-            <h2 className="mb-2 font-bold">������� ���� �亯</h2>
+            <h2 className="mb-2 font-bold">쿠폰 등급 발급</h2>
+            <div className="max-h-96 space-y-2 overflow-auto">
+              {coupons.map((coupon) => {
+                const targetGrade = String(coupon.targetGrade || "ALL").toUpperCase();
+                const fixedGrade = targetGrade !== "ALL";
+                const selectedGrade = couponIssueGrades[coupon.id] || (fixedGrade ? targetGrade : "BRONZE");
+
+                return (
+                  <div key={coupon.id} className="rounded border p-2 text-sm">
+                    <p className="font-semibold">
+                      #{coupon.id} {coupon.code}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      대상등급: {targetGrade} | 잔여수량: {Number(coupon.remainingCount || 0)}
+                    </p>
+                    <div className="mt-2 grid gap-2 sm:grid-cols-[1fr_auto]">
+                      <select
+                        className="rounded border border-input bg-background px-2 py-1.5 text-xs"
+                        value={selectedGrade}
+                        onChange={(e) =>
+                          setCouponIssueGrades((prev) => ({
+                            ...prev,
+                            [coupon.id]: e.target.value,
+                          }))
+                        }
+                        disabled={fixedGrade}
+                      >
+                        {MEMBERSHIP_GRADES.map((grade) => (
+                          <option key={grade} value={grade}>
+                            {grade}
+                          </option>
+                        ))}
+                      </select>
+                      <button
+                        type="button"
+                        onClick={() => issueCouponByGrade(coupon.id)}
+                        className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground disabled:cursor-not-allowed disabled:opacity-50"
+                        disabled={Number(coupon.remainingCount || 0) <= 0}
+                      >
+                        등급 발급
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+              {coupons.length === 0 && <p className="text-sm text-muted-foreground">쿠폰이 없습니다.</p>}
+            </div>
+          </section>
+
+          <section className="mt-4 rounded-xl border bg-card p-4">
+            <h2 className="mb-2 font-bold">고객센터 문의 답변</h2>
             <div className="max-h-[520px] space-y-3 overflow-auto">
               {inquiries.map((q) => (
                 <div key={q.id} className="rounded-xl border p-3">
-                  <p className="text-sm font-semibold">#{q.id} {q.subject || "(���� ����)"}</p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    ����: {q.status} | ȸ��: {q.userId || "-"} | �ۼ���: {formatDateTime(q.createdAt)}
+                  <p className="text-sm font-semibold">
+                    #{q.id} {q.subject || "(제목 없음)"}
                   </p>
-                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm">{q.content || "���� ������ �����ϴ�."}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    상태: {q.status} | 회원: {q.userId || "-"} | 작성일: {formatDateTime(q.createdAt)}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap rounded-lg bg-background px-3 py-2 text-sm">
+                    {q.content || "내용이 없습니다."}
+                  </p>
                   <textarea
                     className="mt-2 h-24 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
-                    placeholder="��� �亯�� �Է��ϼ���"
+                    placeholder="회원에게 전달할 답변을 입력해 주세요"
                     value={replyDrafts[q.id] || ""}
                     onChange={(e) => setReplyDrafts((prev) => ({ ...prev, [q.id]: e.target.value }))}
                   />
                   <div className="mt-2 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">���� �亯: {q.adminAnswer ? "����" : "����"}</p>
+                    <p className="text-xs text-muted-foreground">기존 답변: {q.adminAnswer ? "있음" : "없음"}</p>
                     <button
                       type="button"
                       onClick={() => replyInquiry(q.id)}
                       className="rounded bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground"
                     >
-                      �亯 ����
+                      답변 등록
                     </button>
                   </div>
                 </div>
               ))}
-              {inquiries.length === 0 && <p className="text-sm text-muted-foreground">���� �����Ͱ� �����ϴ�.</p>}
+              {inquiries.length === 0 && <p className="text-sm text-muted-foreground">문의 데이터가 없습니다.</p>}
             </div>
           </section>
 
           <section className="mt-4 rounded-xl border bg-card p-4">
-            <h2 className="mb-2 font-bold">���� ���</h2>
-            <p className="mb-2 text-xs text-muted-foreground">���� ���� ��: {books.length}</p>
+            <h2 className="mb-2 font-bold">공지 등록</h2>
+            <p className="mb-2 text-xs text-muted-foreground">등록 도서 수: {books.length}</p>
             <div className="grid gap-2 md:grid-cols-2">
               <input
                 className="rounded border px-3 py-2"
-                placeholder="����"
+                placeholder="공지 제목"
                 value={noticeForm.title}
                 onChange={(e) => setNoticeForm({ ...noticeForm, title: e.target.value })}
               />
               <input
                 className="rounded border px-3 py-2"
-                placeholder="����"
+                placeholder="공지 내용"
                 value={noticeForm.content}
                 onChange={(e) => setNoticeForm({ ...noticeForm, content: e.target.value })}
               />
             </div>
-            <button className="mt-2 rounded bg-primary px-3 py-2 text-white" onClick={postNotice}>���� ���</button>
+            <button className="mt-2 rounded bg-primary px-3 py-2 text-white" onClick={postNotice}>
+              공지 등록
+            </button>
           </section>
         </>
       )}

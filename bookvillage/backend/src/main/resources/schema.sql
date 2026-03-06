@@ -5,11 +5,13 @@
 CREATE TABLE IF NOT EXISTS users (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(255) NOT NULL UNIQUE,
+    username VARCHAR(50),
     password VARCHAR(64) NOT NULL,
     name VARCHAR(100) NOT NULL,
     phone VARCHAR(20),
     address VARCHAR(500),
     role VARCHAR(20) NOT NULL DEFAULT 'USER',
+    membership_grade VARCHAR(20) NOT NULL DEFAULT 'BRONZE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
@@ -105,9 +107,22 @@ CREATE TABLE IF NOT EXISTS coupons (
     code VARCHAR(50) UNIQUE NOT NULL,
     discount_type VARCHAR(20),
     discount_value DECIMAL(12,2),
+    remaining_count INT DEFAULT 1,
+    target_grade VARCHAR(20) NOT NULL DEFAULT 'ALL',
     valid_from TIMESTAMP,
     valid_until TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS user_coupon_issues (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    coupon_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    issued_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    used_at TIMESTAMP NULL,
+    UNIQUE KEY uk_user_coupon_issue (coupon_id, user_id),
+    FOREIGN KEY (coupon_id) REFERENCES coupons(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 -- 1.5 customer_service

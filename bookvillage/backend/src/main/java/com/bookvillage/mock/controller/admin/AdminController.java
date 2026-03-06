@@ -128,8 +128,9 @@ public class AdminController {
         requireAdmin(principal, "REQ-COM-043", String.valueOf(request));
         String status = request != null ? request.get("status") : null;
         String role = request != null ? request.get("role") : null;
+        String membershipGrade = request != null ? request.get("membershipGrade") : null;
         securityLabService.simulate("REQ-COM-043", principal.getUserId(), "/api/admin/users/" + userId + "/status", String.valueOf(request));
-        return ResponseEntity.ok(adminService.updateUserStatus(userId, status, role));
+        return ResponseEntity.ok(adminService.updateUserStatus(userId, status, role, membershipGrade));
     }
 
     @GetMapping("/coupons")
@@ -142,6 +143,16 @@ public class AdminController {
     public ResponseEntity<Coupon> createCoupon(@AuthenticationPrincipal UserPrincipal principal, @RequestBody Coupon coupon) {
         requireAdmin(principal, "REQ-COM-019", coupon.getCode());
         return ResponseEntity.ok(adminService.createCoupon(coupon));
+    }
+
+    @PostMapping("/coupons/{couponId}/issue-by-grade")
+    public ResponseEntity<Map<String, Object>> issueCouponByGrade(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable Long couponId,
+            @RequestBody(required = false) Map<String, String> request) {
+        requireAdmin(principal, "REQ-COM-019", String.valueOf(couponId));
+        String grade = request != null ? request.get("grade") : null;
+        return ResponseEntity.ok(adminService.issueCouponByGrade(couponId, grade));
     }
 
     @GetMapping("/customer-service")
